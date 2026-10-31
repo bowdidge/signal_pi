@@ -244,5 +244,64 @@ class BasicTest(unittest.TestCase):
         # Should evaluate all rules without raising KeyError or unhandled exceptions
         logic_engine.poll()
 
+    def testMultiExpanderRouting(self):
+        """Verify that Logic coordinates inputs and outputs across multiple expanders."""
+        expander_1 = mock_port_expander.PortExpander(0x20, None)
+        expander_2 = mock_port_expander.PortExpander(0x21, None)
+        expander_3 = mock_port_expander.PortExpander(0x22, None)
+
+        mapper_1 = signal_logic.NameMapper(
+            expander_1,
+            inputs=['EXP1_IN_0', 'EXP1_IN_1', '', '', '', '', '', ''],
+            outputs=['EXP1_OUT_0', '', '', '', '', '', '', '']
+        )
+        mapper_2 = signal_logic.NameMapper(
+            expander_2,
+            inputs=['EXP2_IN_0', '', '', '', '', '', '', ''],
+            outputs=['EXP2_OUT_0', '', '', '', '', '', '', '']
+        )
+        mapper_3 = signal_logic.NameMapper(
+            expander_3,
+            inputs=['', '', '', '', '', '', '', ''],
+            outputs=['EXP3_OUT_0', '', '', '', '', '', '', '']
+        )
+
+        logic_engine = signal_logic.Logic([mapper_1, mapper_2, mapper_3])
+
+        # Cross-expander rules:
+        # 1. Output on Expander 2 depends on Input on Expander 1
+        # 2. Output on Expander 3 depends on Inputs from both Expander 1 AND Expander 2
+        # 3. Output on Expander 1 depends on Output on Expander 2
+        logic_clauses = [
+            ('EXP2_OUT_0', signal_helper.OR('EXP1_IN_0')),
+            ('EXP3_OUT_0', signal_helper.AND('EXP1_IN_0', 'EXP2_IN_0')),
+            ('EXP1_OUT_0', signal_helper.OR('EXP2_OUT_0')),
+        ]
+        logic_engine.set_logic(logic_clauses)
+
+        # Initial state: all inputs False
+        logic_engine.poll()
+        self.assertFalse(expander_2.get_output_value(0))
+        self.assertFalse(expander_3.get_output_value(0))
+        self.assertFalse(expander_1.get_output_value(0))
+
+        # Turn on input on expander 1
+        expander_1.mock_set_input(0, True)
+        logic_engine.poll()
+
+        # Expander 2 output should be True (driven by Expander 1 input)
+        self.assertTrue(expander_2.get_output_value(0))
+        # Expander 1 output should be True (driven by Expander 2 output)
+        self.assertTrue(expander_1.get_output_value(0))
+        # Expander 3 output should still be False (waiting on Expander 2 input)
+        self.assertFalse(expander_3.get_output_value(0))
+
+        # Now turn on input on expander 2
+        expander_2.mock_set_input(0, True)
+        logic_engine.poll()
+
+        # Expander 3 output should now be True (both Expander 1 and 2 inputs are True)
+        self.assertTrue(expander_3.get_output_value(0))
+
 if __name__ == '__main__':
     unittest.main()
