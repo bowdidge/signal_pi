@@ -58,14 +58,12 @@ outputs into reads and writes to the MCP23017 (via the PortExpander class).
 
 # Future Features
 
-* Web server for displaying signal status and changes
-
 * Be able to quickly define two-headed signals with a single statement
 
 # Known Issues
 
 * Circular dependencies in outputs are handled by checking the current output
 state at the time of evaluating the logic, and re-evaluating on every poll.
-This can allow flashing lights to be done.
+This can allow flashing lights to be done.  This can also cause delays if
+one output is dependent on another output.
 
-* Change to have LCD display use status messages is half done.
