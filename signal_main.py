@@ -53,7 +53,7 @@ def main():
     atexit.register(lambda: shutdown(lcd_panel, None))
 
     tracker = status_tracker.StatusTracker()
-    logic_thingy, expanders = layout.setup_layout(
+    logic_engine, expanders = layout.setup_layout(
         port_expander.PortExpander, status_tracker=tracker
     )
 
@@ -97,14 +97,14 @@ def main():
     iter = 0
     try:
         while True:
-            print('Polling all logic!')
-            logic_thingy.poll()
+            logic_engine.poll()
 
             # If we have an I2C LCD attached, then we'll put out status
             # messages to it.  The message changes are done here to ensure
             # other writes to I2C for signalling are not also in progress.
             pending_lcd = tracker.pop_pending_lcd_message()
             if pending_lcd:
+                # Line name on first line, state on second.
                 lcd_panel.display(pending_lcd[0], pending_lcd[1])
 
             # Wait a bit before re-polling signals.

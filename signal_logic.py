@@ -133,7 +133,6 @@ class Logic(object):
         val = predicate(self)
         if self.status_tracker:
             self.status_tracker.record_change(output_name, val, is_input=False)
-        print('Set %s to %s' % (output_name, val))
         name_mapper.set_output(output_name, val)
 
     def variable_value(self, input_name):
