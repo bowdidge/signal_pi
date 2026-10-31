@@ -2,13 +2,10 @@
 # Simple debugging port expander.
 
 class PortExpander(object):
-    def __init__(self, device, display):
+    def __init__(self, device):
         self.device = device
         self.input_values = [False for x in range(0, 8)]
         self.output_values = [False for x in range(0, 24)]
-        self.display = display
-        if self.display:
-            self.display.display('Foo', 'bar')
         pass
 
     def setup(self):

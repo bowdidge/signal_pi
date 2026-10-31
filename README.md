@@ -12,7 +12,9 @@ inputs from sensors on the layout and outputs to LEDs in signals on the
 layout.
 
 Goals for this implementation:
-* Avoid needing a PC to run signals.
+* Avoid needing a PC to run signals - intended for signal systems that are
+less sophisticated than systems that might require either SignalPro/JMRI
+or CMRI.
 * Run on a Raspberry Pi for easier debugging compared with Arduino or
 hardcoded signals.
 * Easy description and changes to signals in terms of inputs and outputs

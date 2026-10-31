@@ -127,16 +127,18 @@ LOGIC_CLAUSES = [
 ]
 
 
-def setup_layout(port_expander_class, lcd_panel=None):
+def setup_layout(port_expander_class, status_tracker=None):
     """Build and wire the Vasona Branch layout.
 
     Args:
         port_expander_class: PortExpander class to instantiate (hardware or mock).
-        lcd_panel: Optional display device.
+        status_tracker: Optional StatusTracker instance for sharing information with display devices..
 
     Returns:
         (logic_engine, expanders_list)
     """
     import signal_logic
-    return signal_logic.build_engine(EXPANDERS, LOGIC_CLAUSES, port_expander_class, lcd_panel)
+    return signal_logic.build_engine(
+        EXPANDERS, LOGIC_CLAUSES, port_expander_class, status_tracker=status_tracker
+    )
 

@@ -47,7 +47,6 @@ class NameMapper(object):
                 reversed = False
             if name == input_name:
                 value = self.port_expander.get_input(index)
-                # lcd_panel('Input %s is %s' % (name, bool(value)), '')
                 if reversed:
                     return not(bool(value))
                 else:
@@ -75,12 +74,14 @@ class NameMapper(object):
 class Logic(object):
     """Handle signal logic via inputs and outputs in port expander boards."""
     
-    def __init__(self, name_mappers, lcd_panel=None):
+    def __init__(self, name_mappers, status_tracker=None):
         self.name_mappers = name_mappers
-        self.lcd_panel = lcd_panel
+        self.status_tracker = status_tracker
         self.past_values = {}
         self.name_to_name_mapper = {}
 
+        all_inputs = []
+        all_outputs = []
         for name_mapper in self.name_mappers:
             for input in name_mapper.inputs:
                 input_name = input
@@ -90,8 +91,14 @@ class Logic(object):
                     reversed = input.get('reversed', False)
                 if input_name:
                     self.name_to_name_mapper[input_name] = name_mapper
+                    all_inputs.append(input_name)
             for output in name_mapper.outputs:
-                self.name_to_name_mapper[output] = name_mapper
+                if output:
+                    self.name_to_name_mapper[output] = name_mapper
+                    all_outputs.append(output)
+
+        if self.status_tracker:
+            self.status_tracker.initialize_names(all_inputs, all_outputs)
 
     def set_logic(self, logic_classes):
         self.logic_classes = logic_classes
@@ -102,6 +109,8 @@ class Logic(object):
         # Evaluate here.
         name_mapper = self.name_to_name_mapper[output_name]
         val = predicate(self)
+        if self.status_tracker:
+            self.status_tracker.record_change(output_name, val, is_input=False)
         print('Set %s to %s' % (output_name, val))
         name_mapper.set_output(output_name, val)
 
@@ -116,9 +125,8 @@ class Logic(object):
         if name_mapper.is_input(input_name):
             past_value = self.past_values.get(input_name)
             if past_value is None or past_value != value:
-                if self.lcd_panel:
-                    self.lcd_panel.display('Change %s' % input_name,
-                                           '%s' % value),
+                if self.status_tracker:
+                    self.status_tracker.record_change(input_name, value, is_input=True)
             self.past_values[input_name] = value
         return value
 
@@ -135,14 +143,15 @@ class Logic(object):
             self.logic_eval(output_name, predicate)
 
 
-def build_engine(expanders_config, logic_clauses, port_expander_class, lcd_panel=None):
+def build_engine(expanders_config, logic_clauses, port_expander_class,
+                 status_tracker=None):
     """Instantiate PortExpanders, NameMappers, and wire them into a Logic engine.
 
     Args:
         expanders_config: List of expander definition dicts with address, inputs, outputs.
         logic_clauses: List of (output_name, predicate) logic tuples.
         port_expander_class: PortExpander class to instantiate (hardware or mock).
-        lcd_panel: Optional display panel.
+        status_tracker: Optional StatusTracker instance for tracking states and web updates.
 
     Returns:
         (logic_engine, expanders_list)
@@ -150,14 +159,14 @@ def build_engine(expanders_config, logic_clauses, port_expander_class, lcd_panel
     expanders = []
     name_mappers = []
     for exp_cfg in expanders_config:
-        expander = port_expander_class(exp_cfg['address'], lcd_panel)
+        expander = port_expander_class(exp_cfg['address'])
         expander.setup()
         expanders.append(expander)
         name_mappers.append(
             NameMapper(expander, exp_cfg['inputs'], exp_cfg['outputs'])
         )
 
-    logic_engine = Logic(name_mappers, lcd_panel)
+    logic_engine = Logic(name_mappers, status_tracker=status_tracker)
     logic_engine.set_logic(logic_clauses)
     return logic_engine, expanders
 

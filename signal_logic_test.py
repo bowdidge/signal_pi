@@ -11,7 +11,7 @@ import signal_helper
 
 class BasicTest(unittest.TestCase):
     def testSimple(self):
-        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        port_expander_1 = mock_port_expander.PortExpander(0x1)
         inputs = ['IN_0', 'IN_1', '', '', '', '', '', '']
         outputs = ['OUT_0', 'OUT_1', 'OUT_2', 'OUT_3', '', '', '', '',
                    '', '', '', '', '', '', '', ''
@@ -47,7 +47,7 @@ class BasicTest(unittest.TestCase):
         self.assertTrue(port_expander_1.get_output_value(2))
 
     def testOr(self):
-        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        port_expander_1 = mock_port_expander.PortExpander(0x1)
         inputs = ['IN_0', 'IN_1', '', '', '', '', '', '']
         outputs = ['OUT_0', '', '', '', '', '', '', '',
                    '', '', '', '', '', '', '', ''
@@ -89,7 +89,7 @@ class BasicTest(unittest.TestCase):
         
     def testReferenceOutput(self):
         """Check that an output can be used as part of logic."""
-        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        port_expander_1 = mock_port_expander.PortExpander(0x1)
         inputs = ['IN_0', 'IN_1', '', '', '', '', '', '']
         outputs = ['OUT_0', 'OUT_1', '', '', '', '', '', '',
                    '', '', '', '', '', '', '', ''
@@ -127,7 +127,7 @@ class BasicTest(unittest.TestCase):
         self.assertTrue(port_expander_1.get_output_value(1))
 
     def testAnd(self):
-        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        port_expander_1 = mock_port_expander.PortExpander(0x1)
         inputs = ['IN_0', 'IN_1', '', '', '', '', '', '']
         outputs = ['OUT_0', '', '', '', '', '', '', '',
                    '', '', '', '', '', '', '', ''
@@ -169,7 +169,7 @@ class BasicTest(unittest.TestCase):
 
     def testReversedInput(self):
         """Check that inputs configured with reversed=True invert their hardware signal."""
-        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        port_expander_1 = mock_port_expander.PortExpander(0x1)
         inputs = [{'name': 'BLOCK_1', 'reversed': True},
                   {'name': 'BLOCK_2', 'reversed': False},
                   {'unused': True},
@@ -201,7 +201,7 @@ class BasicTest(unittest.TestCase):
 
     def testReversedInputInLogic(self):
         """Check that reversed inputs correctly drive logic evaluation and outputs."""
-        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        port_expander_1 = mock_port_expander.PortExpander(0x1)
         inputs = [{'name': 'BLOCK_1', 'reversed': True},
                   {'unused': True}, '', '', '', '', '', '']
         outputs = ['W1R', 'W1G', '', '', '', '', '', '',
@@ -238,9 +238,9 @@ class BasicTest(unittest.TestCase):
 
     def testMultiExpanderRouting(self):
         """Verify that Logic coordinates inputs and outputs across multiple expanders."""
-        expander_1 = mock_port_expander.PortExpander(0x20, None)
-        expander_2 = mock_port_expander.PortExpander(0x21, None)
-        expander_3 = mock_port_expander.PortExpander(0x22, None)
+        expander_1 = mock_port_expander.PortExpander(0x20)
+        expander_2 = mock_port_expander.PortExpander(0x21)
+        expander_3 = mock_port_expander.PortExpander(0x22)
 
         mapper_1 = signal_logic.NameMapper(
             expander_1,
@@ -297,7 +297,7 @@ class BasicTest(unittest.TestCase):
 
     def testMultiTermOr(self):
         """Verify that OR works with 3, 4, and 5 terms."""
-        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        port_expander_1 = mock_port_expander.PortExpander(0x1)
         inputs = ['IN_0', 'IN_1', 'IN_2', 'IN_3', 'IN_4', '', '', '']
         outputs = ['OUT_3', 'OUT_4', 'OUT_5', '', '', '', '', '',
                    '', '', '', '', '', '', '', '',
@@ -343,7 +343,7 @@ class BasicTest(unittest.TestCase):
 
     def testMultiTermAnd(self):
         """Verify that AND works with 3, 4, and 5 terms."""
-        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        port_expander_1 = mock_port_expander.PortExpander(0x1)
         inputs = ['IN_0', 'IN_1', 'IN_2', 'IN_3', 'IN_4', '', '', '']
         outputs = ['OUT_3', 'OUT_4', 'OUT_5', '', '', '', '', '',
                    '', '', '', '', '', '', '', '',
@@ -402,7 +402,7 @@ class BasicTest(unittest.TestCase):
 
     def testNestedExpressions(self):
         """Verify that combinators can be nested (e.g. OR(A, NOT(B)), OR(A, AND(B, C)))."""
-        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        port_expander_1 = mock_port_expander.PortExpander(0x1)
         inputs = ['IN_0', 'IN_1', 'IN_2', '', '', '', '', '']
         outputs = ['OUT_OR_NOT', 'OUT_OR_AND', 'OUT_DE_MORGAN', '', '', '', '', '',
                    '', '', '', '', '', '', '', '',

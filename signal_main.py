@@ -23,6 +23,8 @@ else:
 
 import layout
 import signal_logic
+import status_server
+import status_tracker
 
 def shutdown(lcd_panel, exc):
     if exc:
@@ -37,6 +39,8 @@ def main():
                                      'control signals')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--testall', action='store_true')
+    parser.add_argument('--port', type=int, default=8080, help='Port for HTTP status server')
+    parser.add_argument('--no-http', action='store_true', help='Disable HTTP status server')
     args = parser.parse_args()
     
     if MOCK:
@@ -48,9 +52,15 @@ def main():
 
     atexit.register(lambda: shutdown(lcd_panel, None))
 
+    tracker = status_tracker.StatusTracker()
     logic_thingy, expanders = layout.setup_layout(
-        port_expander.PortExpander, lcd_panel=lcd_panel
+        port_expander.PortExpander, status_tracker=tracker
     )
+
+    if not args.no_http:
+        server, _ = status_server.start_status_server(tracker, port=args.port)
+        print('HTTP status server running at http://0.0.0.0:%d/' % args.port)
+        atexit.register(lambda: status_server.stop_status_server(server))
 
     lcd_panel.display('Testing lights', '')
     print('Testing all lights - flashing all pairs.')
@@ -89,6 +99,15 @@ def main():
         while True:
             print('Polling all logic!')
             logic_thingy.poll()
+
+            # If we have an I2C LCD attached, then we'll put out status
+            # messages to it.  The message changes are done here to ensure
+            # other writes to I2C for signalling are not also in progress.
+            pending_lcd = tracker.pop_pending_lcd_message()
+            if pending_lcd:
+                lcd_panel.display(pending_lcd[0], pending_lcd[1])
+
+            # Wait a bit before re-polling signals.
             time.sleep(0.25)
             
             if MOCK:

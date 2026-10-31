@@ -33,21 +33,17 @@ class PortExpander(object):
 
     Manipulates two MCP23017 chips on the same board via I2C.
     """
-    def __init__(self, device, display_device):
+    def __init__(self, device):
         """Set up port expander.
 
         device: integer value that device responds to on I2C bus.
-        display_device: device to display significant status messages (on order
-        of one every several seconds.)
 
         """
         # Bus 1 on Raspberry Pis is for I2C.
         self.bus = smbus.SMBus(1)
         self.device = device
+        # Current output lines set for device, as integer.
         self.now_value = 0
-        self.displayer = display_device
-        if self.displayer:
-            self.displayer.display('Set up device %02x' % self.device, '')
 
     def setup(self):
         # All output ports off.
@@ -146,7 +142,7 @@ def main():
     port = sys.argv[1]
     port_number = int(port, 16)
 
-    expander = PortExpander(port_number, None)
+    expander = PortExpander(port_number)
     expander.setup()
 
     print('Flipping outputs')
