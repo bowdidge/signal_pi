@@ -60,14 +60,22 @@ class PortExpander(object):
         self.bus.write_byte_data(self.device, OLATB, 0)
 
     def get_input(self, index):
-        # Return true, false.
-        resp = self.bus.read_byte_data(self.device, GPIOA)
-        # print(resp)
-        value = bool(resp & (1 << index))
-        # print('Request value from device %d input %d is %s' %(self.device,
-        # index, value))
-        return value
-
+        e = None
+        for i in range(0,3):
+            try:
+                # Return true, false.
+                resp = self.bus.read_byte_data(self.device, GPIOA)
+                # print(resp)
+                value = bool(resp & (1 << index))
+                # print('Request value from device %d input %d is %s' %(self.device,
+                # index, value))
+                return value
+            except IOError as e:
+                print('Error in get_input: %s' % e)
+                # and repeat
+        print("Multiple IOErrors when trying to read bus.  Failing.")
+        throw(e)
+                
     def get_output_value(self, index):
         if self.device % 2 == 0:
             index += 8
@@ -75,20 +83,37 @@ class PortExpander(object):
         return bool(value)
     
     def set_output(self, index, value):
-        if self.device % 2 == 0:
-            index += 8
-        now_value = self.now_value
+        try:
+            self.set_output_inner(index, value)
+        except Exception as e:
+            print('failure to write, trying again')
+            self.set_output_inner(index, value)
 
-        if value:
-            now_value |= (1 << index)
-        else:
-            now_value &= ~ (1 << index)
-        print('Now value is 0x%08x' % now_value)
-        print('Set device %s output %s to %s' % (self.device, index, value))
+    def set_output_inner(self, index, value):
+        e = None
+        for i in range(0, 3):
+            try:
+                if self.device % 2 == 0:
+                    index += 8
+                now_value = self.now_value
 
-        self.bus.write_byte_data(self.device, OLATA, now_value & 0xff)
-        self.bus.write_byte_data(self.device, OLATB, (now_value & 0xff00) >> 8)
-        self.now_value = now_value
+                if value:
+                    now_value |= (1 << index)
+                else:
+                    now_value &= ~ (1 << index)
+                #print('Now value is 0x%08x' % now_value)
+                #print('Set device %s output %s to %s' % (self.device, index, value))
+
+                self.bus.write_byte_data(self.device, OLATA, now_value & 0xff)
+                self.bus.write_byte_data(self.device, OLATB, (now_value & 0xff00) >> 8)
+                self.now_value = now_value
+                return
+            except IOError as e:
+                print('Error in set_output_inner: %s' % e)
+                # and try again.
+        # Failed too many times?  Bail out.
+        throw(e)
+        
 
     def set_outputs(self, value):
         self.now_value = value
@@ -96,7 +121,6 @@ class PortExpander(object):
         self.bus.write_byte_data(self.device, OLATB, (value & 0xff00) >> 8)
         
     def flash(self):
-        print('baz')
         for data in range(0,8):
              self.bus.write_byte_data(self.device, OLATA, data)
              self.bus.write_byte_data(self.device, OLATB, data)

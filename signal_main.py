@@ -249,7 +249,7 @@ def main():
                      ('E8R', signal_logic.OR('BLOCK_8',
                                              'SW_VASONA')),
                      ('E8G', signal_logic.NOT('E8R'))]
-                      
+
     logic_thingy.set_logic(logic_clauses)
     
 

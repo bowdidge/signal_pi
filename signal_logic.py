@@ -4,6 +4,23 @@
 
 import time
 
+# Registers for GPIO Ports Bank=0
+IODIRA = 0x00 # pin dir reg
+IODIRB = 0x01
+IPOLA = 0x02
+IPOLB = 0x03
+GPINTENA = 0x04
+GPINTENB = 0x05
+GPPUA = 0x0c
+GPPUB = 0x0d
+GPIOA = 0x12 # register for inputs
+GPIOB = 0x13
+OLATA = 0x14 # register for outputs
+OLATB = 0x15
+
+class SignalLogic(object):
+    def __init__(self, logic_array):
+        pass
 
 class NameMapper(object):
     """Wraps PortExpander so it can be manipulated by names.
