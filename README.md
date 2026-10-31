@@ -51,12 +51,19 @@ about inputs and outputs) came directly from the SIC24 programming.
 The Logic class allows defining the value each output should
 have based on inputs and other outputs.
 
-Inputs and outputs are read and written via PortMapper class.
+The PortMapper class handles the mapping from names of signal inputs and
+outputs into reads and writes to the MCP23017 (via the PortExpander class).
+
+# Future Features
+
+* Web server for displaying signal status and changes
+
+* Be able to quickly define two-headed signals with a single statement
 
 # Known Issues
 
-Circular dependencies in outputs are handled by checking the current output
+* Circular dependencies in outputs are handled by checking the current output
 state at the time of evaluating the logic, and re-evaluating on every poll.
 This can allow flashing lights to be done.
 
-Change to have LCD display use status messages is half done.
+* Change to have LCD display use status messages is half done.
