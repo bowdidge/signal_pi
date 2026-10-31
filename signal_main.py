@@ -80,13 +80,6 @@ def main():
             expander.set_outputs(mask)
         time.sleep(0.25)
 
-        print('')
-        for expander in expanders:
-            values = ''
-            for index in range(0, 8):
-                values += '%s ' % str(expander.get_input(index))[0]
-            print('Expander %02x: %s' % (expander.device, values))
-
     lcd_panel.display('Signals running', '')
 
     # Set all signals to green.

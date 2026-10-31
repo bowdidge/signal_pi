@@ -50,14 +50,20 @@ class PortExpander(object):
         # All outputs.
         if self.device % 2 == 0:
             self.bus.write_byte_data(self.device, IODIRA, 0xff)
+            time.sleep(0.02)
             self.bus.write_byte_data(self.device, GPPUA, 0xff)
+            time.sleep(0.02)
         else:
             self.bus.write_byte_data(self.device, IODIRA, 0)
+            time.sleep(0.02)
 
         self.bus.write_byte_data(self.device, IODIRB, 0x00)
+        time.sleep(0.02)
         # Clear outputs.
         self.bus.write_byte_data(self.device, OLATA, 0)
+        time.sleep(0.02)
         self.bus.write_byte_data(self.device, OLATB, 0)
+        time.sleep(0.02)
 
     def get_input(self, index):
         e = None
@@ -105,7 +111,9 @@ class PortExpander(object):
                 #print('Set device %s output %s to %s' % (self.device, index, value))
 
                 self.bus.write_byte_data(self.device, OLATA, now_value & 0xff)
+                time.sleep(0.02)
                 self.bus.write_byte_data(self.device, OLATB, (now_value & 0xff00) >> 8)
+                time.sleep(0.02)
                 self.now_value = now_value
                 return
             except IOError as e:
@@ -118,17 +126,24 @@ class PortExpander(object):
     def set_outputs(self, value):
         self.now_value = value
         self.bus.write_byte_data(self.device, OLATA, (value & 0xff))
+        time.sleep(0.02)
         self.bus.write_byte_data(self.device, OLATB, (value & 0xff00) >> 8)
+        time.sleep(0.02)
 
     def flash(self):
         for data in range(0,8):
              self.bus.write_byte_data(self.device, OLATA, data)
+             time.sleep(0.02)
              self.bus.write_byte_data(self.device, OLATB, data)
+             time.sleep(0.02)
+
              time.sleep(1)
 
         # Turn off outputs.
         self.bus.write_byte_data(self.device, OLATA, 0)
+        time.sleep(0.02)
         self.bus.write_byte_data(self.device, OLATB, 0)
+        time.sleep(0.02)
 
 def main():
     """Test inputs and outputs."""
