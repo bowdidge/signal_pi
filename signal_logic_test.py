@@ -303,5 +303,167 @@ class BasicTest(unittest.TestCase):
         # Expander 3 output should now be True (both Expander 1 and 2 inputs are True)
         self.assertTrue(expander_3.get_output_value(0))
 
+    def testMultiTermOr(self):
+        """Verify that OR works with 3, 4, and 5 terms."""
+        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        inputs = ['IN_0', 'IN_1', 'IN_2', 'IN_3', 'IN_4', '', '', '']
+        outputs = ['OUT_3', 'OUT_4', 'OUT_5', '', '', '', '', '',
+                   '', '', '', '', '', '', '', '',
+                   '', '', '', '', '', '', '', '']
+
+        logic_clauses = [
+            ('OUT_3', signal_helper.OR('IN_0', 'IN_1', 'IN_2')),
+            ('OUT_4', signal_helper.OR('IN_0', 'IN_1', 'IN_2', 'IN_3')),
+            ('OUT_5', signal_helper.OR('IN_0', 'IN_1', 'IN_2', 'IN_3', 'IN_4')),
+        ]
+        name_mapper = signal_logic.NameMapper(port_expander_1, inputs, outputs)
+        logic_thingy = signal_logic.Logic([name_mapper])
+        logic_thingy.set_logic(logic_clauses)
+
+        # All inputs False initially -> all outputs False
+        logic_thingy.poll()
+        self.assertFalse(port_expander_1.get_output_value(0))
+        self.assertFalse(port_expander_1.get_output_value(1))
+        self.assertFalse(port_expander_1.get_output_value(2))
+
+        # Set 5th term (IN_4) -> only OUT_5 becomes True
+        port_expander_1.mock_set_input(4, True)
+        logic_thingy.poll()
+        self.assertFalse(port_expander_1.get_output_value(0))
+        self.assertFalse(port_expander_1.get_output_value(1))
+        self.assertTrue(port_expander_1.get_output_value(2))
+
+        # Set 4th term (IN_3) -> OUT_4 and OUT_5 become True
+        port_expander_1.mock_set_input(4, False)
+        port_expander_1.mock_set_input(3, True)
+        logic_thingy.poll()
+        self.assertFalse(port_expander_1.get_output_value(0))
+        self.assertTrue(port_expander_1.get_output_value(1))
+        self.assertTrue(port_expander_1.get_output_value(2))
+
+        # Set 3rd term (IN_2) -> all become True
+        port_expander_1.mock_set_input(3, False)
+        port_expander_1.mock_set_input(2, True)
+        logic_thingy.poll()
+        self.assertTrue(port_expander_1.get_output_value(0))
+        self.assertTrue(port_expander_1.get_output_value(1))
+        self.assertTrue(port_expander_1.get_output_value(2))
+
+    def testMultiTermAnd(self):
+        """Verify that AND works with 3, 4, and 5 terms."""
+        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        inputs = ['IN_0', 'IN_1', 'IN_2', 'IN_3', 'IN_4', '', '', '']
+        outputs = ['OUT_3', 'OUT_4', 'OUT_5', '', '', '', '', '',
+                   '', '', '', '', '', '', '', '',
+                   '', '', '', '', '', '', '', '']
+
+        logic_clauses = [
+            ('OUT_3', signal_helper.AND('IN_0', 'IN_1', 'IN_2')),
+            ('OUT_4', signal_helper.AND('IN_0', 'IN_1', 'IN_2', 'IN_3')),
+            ('OUT_5', signal_helper.AND('IN_0', 'IN_1', 'IN_2', 'IN_3', 'IN_4')),
+        ]
+        name_mapper = signal_logic.NameMapper(port_expander_1, inputs, outputs)
+        logic_thingy = signal_logic.Logic([name_mapper])
+        logic_thingy.set_logic(logic_clauses)
+
+        # Initially all False -> all False
+        logic_thingy.poll()
+        self.assertFalse(port_expander_1.get_output_value(0))
+        self.assertFalse(port_expander_1.get_output_value(1))
+        self.assertFalse(port_expander_1.get_output_value(2))
+
+        # Turn on IN_0 and IN_1 (2 terms) -> not enough for 3-term AND
+        port_expander_1.mock_set_input(0, True)
+        port_expander_1.mock_set_input(1, True)
+        logic_thingy.poll()
+        self.assertFalse(port_expander_1.get_output_value(0))
+        self.assertFalse(port_expander_1.get_output_value(1))
+        self.assertFalse(port_expander_1.get_output_value(2))
+
+        # Turn on IN_2 -> OUT_3 (3-term) becomes True
+        port_expander_1.mock_set_input(2, True)
+        logic_thingy.poll()
+        self.assertTrue(port_expander_1.get_output_value(0))
+        self.assertFalse(port_expander_1.get_output_value(1))
+        self.assertFalse(port_expander_1.get_output_value(2))
+
+        # Turn on IN_3 -> OUT_4 (4-term) becomes True
+        port_expander_1.mock_set_input(3, True)
+        logic_thingy.poll()
+        self.assertTrue(port_expander_1.get_output_value(0))
+        self.assertTrue(port_expander_1.get_output_value(1))
+        self.assertFalse(port_expander_1.get_output_value(2))
+
+        # Turn on IN_4 -> OUT_5 (5-term) becomes True
+        port_expander_1.mock_set_input(4, True)
+        logic_thingy.poll()
+        self.assertTrue(port_expander_1.get_output_value(0))
+        self.assertTrue(port_expander_1.get_output_value(1))
+        self.assertTrue(port_expander_1.get_output_value(2))
+
+        # Turn off IN_0 -> all immediately False
+        port_expander_1.mock_set_input(0, False)
+        logic_thingy.poll()
+        self.assertFalse(port_expander_1.get_output_value(0))
+        self.assertFalse(port_expander_1.get_output_value(1))
+        self.assertFalse(port_expander_1.get_output_value(2))
+
+    def testNestedExpressions(self):
+        """Verify that combinators can be nested (e.g. OR(A, NOT(B)), OR(A, AND(B, C)))."""
+        port_expander_1 = mock_port_expander.PortExpander(0x1, None)
+        inputs = ['IN_0', 'IN_1', 'IN_2', '', '', '', '', '']
+        outputs = ['OUT_OR_NOT', 'OUT_OR_AND', 'OUT_DE_MORGAN', '', '', '', '', '',
+                   '', '', '', '', '', '', '', '',
+                   '', '', '', '', '', '', '', '']
+
+        logic_clauses = [
+            # OR with nested NOT: True if IN_0 is True OR IN_1 is False
+            ('OUT_OR_NOT', signal_helper.OR('IN_0', signal_helper.NOT('IN_1'))),
+            # OR with nested AND: True if IN_0 is True OR (IN_1 and IN_2 are True)
+            ('OUT_OR_AND', signal_helper.OR('IN_0', signal_helper.AND('IN_1', 'IN_2'))),
+            # NOT of OR: True only if neither IN_0 nor IN_1 is True
+            ('OUT_DE_MORGAN', signal_helper.NOT(signal_helper.OR('IN_0', 'IN_1'))),
+        ]
+        name_mapper = signal_logic.NameMapper(port_expander_1, inputs, outputs)
+        logic_thingy = signal_logic.Logic([name_mapper])
+        logic_thingy.set_logic(logic_clauses)
+
+        # Initially all False:
+        # OUT_OR_NOT: IN_0(False) or NOT(IN_1(False)) -> False or True -> True
+        # OUT_OR_AND: False or (False and False) -> False
+        # OUT_DE_MORGAN: NOT(False or False) -> True
+        logic_thingy.poll()
+        self.assertTrue(port_expander_1.get_output_value(0))
+        self.assertFalse(port_expander_1.get_output_value(1))
+        self.assertTrue(port_expander_1.get_output_value(2))
+
+        # Set IN_1 to True:
+        # OUT_OR_NOT: False or NOT(True) -> False
+        # OUT_OR_AND: False or (True and False) -> False
+        # OUT_DE_MORGAN: NOT(False or True) -> False
+        port_expander_1.mock_set_input(1, True)
+        logic_thingy.poll()
+        self.assertFalse(port_expander_1.get_output_value(0))
+        self.assertFalse(port_expander_1.get_output_value(1))
+        self.assertFalse(port_expander_1.get_output_value(2))
+
+        # Set IN_2 to True as well:
+        # OUT_OR_AND: False or (True and True) -> True
+        port_expander_1.mock_set_input(2, True)
+        logic_thingy.poll()
+        self.assertFalse(port_expander_1.get_output_value(0))
+        self.assertTrue(port_expander_1.get_output_value(1))
+        self.assertFalse(port_expander_1.get_output_value(2))
+
+        # Set IN_0 to True:
+        # OUT_OR_NOT: True or NOT(True) -> True
+        # OUT_OR_AND: True or ... -> True
+        # OUT_DE_MORGAN: NOT(True or ...) -> False
+        port_expander_1.mock_set_input(0, True)
+        logic_thingy.poll()
+        self.assertTrue(port_expander_1.get_output_value(0))
+        self.assertTrue(port_expander_1.get_output_value(1))
+        self.assertFalse(port_expander_1.get_output_value(2))
+
 if __name__ == '__main__':
     unittest.main()
