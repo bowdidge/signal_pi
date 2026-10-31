@@ -1,0 +1,10 @@
+Python code to define signal logic on a model railroad.
+
+The Logic class allows defining the value each output should
+have based on inputs and other outputs.
+
+Inputs and outputs are read and written via PortMapper class.
+
+Circular dependencies in outputs are handled by checking the current output
+state at the time of evaluating the logic, and re-evaluating on every poll.
+This can allow flashing lights to be done.
