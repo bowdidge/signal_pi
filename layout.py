@@ -4,7 +4,7 @@
 #
 
 import signal_helper
-from signal_helper import OR, AND, NOT
+import signal_logic
 
 # Expander configuration.
 # Each card has two chips, responding to an even address (with 8 inputs on Port A
@@ -143,7 +143,6 @@ def setup_layout(port_expander_class, status_tracker=None):
     Returns:
         (logic_engine, expanders_list)
     """
-    import signal_logic
     return signal_logic.build_engine(
         EXPANDERS, LOGIC_CLAUSES, port_expander_class, status_tracker=status_tracker
     )

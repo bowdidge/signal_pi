@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 #
-# Run signal controller.
-#
-# Hardcoded to Vasona Branch.
+# Run the signal controller in normal operation.
 
 import argparse
 import atexit
@@ -68,13 +66,13 @@ def main():
     if args.test:
         repeat = 100000
     for i in range(0, repeat):
-        # Set to all green.
+        # Set to all green - every other output is green LED.
         for expander in expanders:
             mask = 0x5500 if expander.device % 2 == 0 else 0x5555
             expander.set_outputs(mask)
 
         time.sleep(0.25)
-        # Set to all red.
+        # Set to all red - every other output is red LED.
         for expander in expanders:
             mask = 0xaa00 if expander.device % 2 == 0 else 0xaaaa
             expander.set_outputs(mask)

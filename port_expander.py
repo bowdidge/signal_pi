@@ -23,8 +23,10 @@ GPINTENA = 0x04  #
 GPINTENB = 0x05
 GPPUA = 0x0c
 GPPUB = 0x0d
+# Register for reading input values.
 GPIOA = 0x12 # register for inputs
 GPIOB = 0x13
+# Register for writing output values.
 OLATA = 0x14 # register for outputs
 OLATB = 0x15
 
@@ -49,14 +51,17 @@ class PortExpander(object):
         # All output ports off.
         # All outputs.
         if self.device % 2 == 0:
+            # All lines in bank A are inputs on even numbered devices.
             self.bus.write_byte_data(self.device, IODIRA, 0xff)
             time.sleep(0.02)
             self.bus.write_byte_data(self.device, GPPUA, 0xff)
             time.sleep(0.02)
         else:
+            # All of lines in bank A are outputs on odd numbered devices.
             self.bus.write_byte_data(self.device, IODIRA, 0)
             time.sleep(0.02)
 
+        # For all expanders, second set of lines are all outputs.
         self.bus.write_byte_data(self.device, IODIRB, 0x00)
         time.sleep(0.02)
         # Clear outputs.
@@ -124,26 +129,16 @@ class PortExpander(object):
 
 
     def set_outputs(self, value):
+        """Set all outputs at once.
+
+        Value is 16 bits, one bit per output.
+        """
         self.now_value = value
         self.bus.write_byte_data(self.device, OLATA, (value & 0xff))
         time.sleep(0.02)
         self.bus.write_byte_data(self.device, OLATB, (value & 0xff00) >> 8)
         time.sleep(0.02)
 
-    def flash(self):
-        for data in range(0,8):
-             self.bus.write_byte_data(self.device, OLATA, data)
-             time.sleep(0.02)
-             self.bus.write_byte_data(self.device, OLATB, data)
-             time.sleep(0.02)
-
-             time.sleep(1)
-
-        # Turn off outputs.
-        self.bus.write_byte_data(self.device, OLATA, 0)
-        time.sleep(0.02)
-        self.bus.write_byte_data(self.device, OLATB, 0)
-        time.sleep(0.02)
 
 def main():
     """Test inputs and outputs."""
