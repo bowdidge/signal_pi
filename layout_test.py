@@ -376,8 +376,11 @@ class LayoutSmokeTest(unittest.TestCase):
             self.assertFalse(self.logic_engine.variable_value(green),
                              'Expected %s to be off when BLOCK_7 is occupied' % green)
 
-        # W7LR depends on W7UR, which is listed after W7LR in LOGIC_CLAUSES,
-        # so it takes a second poll to propagate.
+        # W7LR depends on W7UR, so it won't change until the poll after
+        # W7UR changes.  Do a second poll to propagate.
+        # In a better world, we wouldn't have outputs in the same signal
+        # depend on each other so the signal indications change
+        # simultaneously.
         self.logic_engine.poll()
         self.assertTrue(self.logic_engine.variable_value('W7LR'),
                         'Expected W7LR to be red after second poll when BLOCK_7 is occupied')

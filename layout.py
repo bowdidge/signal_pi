@@ -93,6 +93,12 @@ LOGIC_CLAUSES = [
     ('W5LG', signal_helper.NOT('W5LR')),
     ('W6R', signal_helper.OR('BLOCK_6', 'SW_ALMA_W', 'SW_LG_E')),
     ('W6G', signal_helper.NOT('W6R')),
+    # TODO(bowdidge): Note this is sub-optimal - because W7LR depends
+    # on W7UR, a change in W7UR won't change W7LR until the poll after
+    # W7UR changes.  This could lead to an inaccurate signal indication
+    # showing for a moment.
+    # Instead, logic for the same signal head (lower and upper) should
+    # not depend on each other but should duplicate logic.
     ('W7LR', signal_helper.OR('W7UR', 'BLOCK_8', 'SW_LG_W')),
     ('W7LG', signal_helper.NOT('W7LR')),
     ('W7UR', signal_helper.OR('BLOCK_7', 'SW_LG_E')),
