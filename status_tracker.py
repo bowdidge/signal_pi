@@ -16,6 +16,10 @@ class StatusTracker(object):
         self.inputs = {}
         self.outputs = {}
         self.recent_changes = collections.deque(maxlen=history_len)
+        # Most recent input change.
+        # For display on LCD at server - because of size and location of
+        # the screen, we only show inputs because input changes are most
+        # important for debugging at the layout.
         self.pending_lcd_message = None
 
     def initialize_names(self, input_names, output_names):
@@ -46,7 +50,9 @@ class StatusTracker(object):
 
                 tag = 'IN' if is_input else 'OUT'
                 val_str = 'ON' if new_value else 'OFF'
-                self.pending_lcd_message = ('%s: %s' % (tag, name[:12]), 'State: %s' % val_str)
+                if is_input:
+                    self.pending_lcd_message = ('%s: %s' % (tag, name[:12]),
+                                                'State: %s' % val_str)
 
     def pop_pending_lcd_message(self):
         """Retrieve and clear the latest pending message for the LCD display."""
