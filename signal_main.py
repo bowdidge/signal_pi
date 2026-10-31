@@ -107,6 +107,7 @@ def main():
                               
     lcd_panel.display('Signals running', '')
 
+    # Set all signals to green for initial values.
     port_expander_1.set_outputs(0x5500)
     port_expander_2.set_outputs(0x5555)
     port_expander_3.set_outputs(0x5500)
