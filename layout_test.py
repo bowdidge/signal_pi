@@ -46,6 +46,12 @@ class LayoutSmokeTest(unittest.TestCase):
             for line in range(8):
                 exp.mock_set_input(line, True)
 
+        # TODO(bowdidge): Automatically set reversed inputs to False.
+        # SW_ALMA_E is reversed.
+        self.expanders[0].mock_set_input(4, False)
+        # SW_LG_E is reversed.
+        self.expanders[2].mock_set_input(5, False)
+
         self.logic_engine.poll()
 
         mainline_greens = [
@@ -78,6 +84,13 @@ class LayoutSmokeTest(unittest.TestCase):
         for exp in self.expanders:
             for line in range(8):
                 exp.mock_set_input(line, True)
+
+        # TODO(bowdidge): Automatically set reversed inputs to False.
+        # SW_ALMA_E is reversed.
+        self.expanders[0].mock_set_input(4, False)
+        # SW_LG_E is reversed.
+        self.expanders[2].mock_set_input(5, False)
+
         self.logic_engine.poll()
 
         self.assertFalse(self.logic_engine.variable_value('W1R'))
@@ -114,6 +127,13 @@ class LayoutSmokeTest(unittest.TestCase):
         for exp in self.expanders:
             for line in range(8):
                 exp.mock_set_input(line, True)
+
+        # TODO(bowdidge): Automatically set reversed inputs to False.
+        # SW_ALMA_E is reversed.
+        self.expanders[0].mock_set_input(4, False)
+        # SW_LG_E is reversed.
+        self.expanders[2].mock_set_input(5, False)
+
         self.logic_engine.poll()
 
         # In clear/normal state, these signals show green (Red is False, Green is True)
@@ -171,6 +191,13 @@ class LayoutSmokeTest(unittest.TestCase):
         for exp in self.expanders:
             for line in range(8):
                 exp.mock_set_input(line, True)
+
+        # TODO(bowdidge): Automatically set reversed inputs to False.
+        # SW_ALMA_E is reversed.
+        self.expanders[0].mock_set_input(4, False)
+        # SW_LG_E is reversed.
+        self.expanders[2].mock_set_input(5, False)
+
         self.logic_engine.poll()
 
         # Occupy BLOCK_3 (line 2 on expander 0x20 pulled low)
