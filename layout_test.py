@@ -165,6 +165,83 @@ class LayoutSmokeTest(unittest.TestCase):
         self.assertFalse(self.logic_engine.variable_value('W3R'))
         self.assertTrue(self.logic_engine.variable_value('W3G'))
 
+    def testBlock3OccupancySignals(self):
+        """Train in single-track BLOCK_3 sets W3R, E3UR, and E4R to red, but leaves E2 and W4 green."""
+        # Set all track clear initially (hardware inputs high)
+        for exp in self.expanders:
+            for pin in range(8):
+                exp.mock_set_input(pin, True)
+        self.logic_engine.poll()
+
+        # Occupy BLOCK_3 (pin 2 on expander 0x20 pulled low)
+        self.expanders[0].mock_set_input(2, False)
+        self.logic_engine.poll()
+
+        # Opposing and protecting signals for the block 3/4 single-track section must show red (stop):
+        # 1. W3R protects westbound entry into block 3
+        self.assertTrue(
+            self.logic_engine.variable_value('W3R'),
+            'Expected W3R to be True (red) when BLOCK_3 is occupied'
+        )
+        self.assertFalse(
+            self.logic_engine.variable_value('W3G'),
+            'Expected W3G to be False (green off) when BLOCK_3 is occupied'
+        )
+        # 2. E3UR protects eastbound entry at signal 3
+        self.assertTrue(
+            self.logic_engine.variable_value('E3UR'),
+            'Expected E3UR to be True (red) when BLOCK_3 is occupied'
+        )
+        self.assertFalse(
+            self.logic_engine.variable_value('E3UG'),
+            'Expected E3UG to be False (green off) when BLOCK_3 is occupied'
+        )
+        # 3. E4R protects eastbound entry into block 4 (preventing head-on collision on connected single track)
+        self.assertTrue(
+            self.logic_engine.variable_value('E4R'),
+            'Expected E4R to be True (red) when BLOCK_3 is occupied'
+        )
+        self.assertFalse(
+            self.logic_engine.variable_value('E4G'),
+            'Expected E4G to be False (green off) when BLOCK_3 is occupied'
+        )
+
+        # Signals for exiting the block or adjacent blocks (E2 and W4) must remain green (stop is False):
+        # E2 (upper and lower heads)
+        self.assertFalse(
+            self.logic_engine.variable_value('E2UR'),
+            'Expected E2UR to be False (green) so train can leave block'
+        )
+        self.assertTrue(
+            self.logic_engine.variable_value('E2UG'),
+            'Expected E2UG to be True (green)'
+        )
+        self.assertFalse(
+            self.logic_engine.variable_value('E2LR'),
+            'Expected E2LR to be False (green)'
+        )
+        self.assertTrue(
+            self.logic_engine.variable_value('E2LG'),
+            'Expected E2LG to be True (green)'
+        )
+        # W4 (upper and lower heads)
+        self.assertFalse(
+            self.logic_engine.variable_value('W4UR'),
+            'Expected W4UR to be False (green) so train can leave block'
+        )
+        self.assertTrue(
+            self.logic_engine.variable_value('W4UG'),
+            'Expected W4UG to be True (green)'
+        )
+        self.assertFalse(
+            self.logic_engine.variable_value('W4LR'),
+            'Expected W4LR to be False (green)'
+        )
+        self.assertTrue(
+            self.logic_engine.variable_value('W4LG'),
+            'Expected W4LG to be True (green)'
+        )
+
 
 if __name__ == '__main__':
     unittest.main()
