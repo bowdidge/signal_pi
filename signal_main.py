@@ -186,7 +186,7 @@ def main():
                      ('W4LG', signal_logic.NOT('W4LR')),
                      ('W5UR', signal_logic.OR('BLOCK_5',
                                               'SW_ALMA_E')),
-                     ('W5UG', signal_logic.NOT('E5UR')),
+                     ('W5UG', signal_logic.NOT('W5UR')),
                      ('W5LR', signal_logic.OR('W5UR',
                                               'BLOCK_6',
                                               'SW_ALMA_W')),
