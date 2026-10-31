@@ -17,6 +17,12 @@ hardcoded signals.
 * Easy description and changes to signals.
 * Programmed in interpreted language 
 
+# Environment
+This code in normal use runs on a Raspberry Pi 4 with IO expander cards
+using the Microchip MCP23017 connected via I2C.
+
+This code should be testable on arbitrary Python implementations.
+
 #Sample Layout
 
 The built-in configuration is for signals on part of the Vasona Branch,
