@@ -4,9 +4,10 @@
 
 import unittest
 
-import mock_port_expander
-
 import signal_logic
+
+import mock_port_expander
+import signal_helper
 
 class BasicTest(unittest.TestCase):
     def testSimple(self):
@@ -17,9 +18,9 @@ class BasicTest(unittest.TestCase):
                    '', '', '', '', '', '', '', '']
 
         # TODO(bowdidge): be able to have single value.
-        logic_clauses = [('OUT_0', signal_logic.OR('IN_0')),
-                         ('OUT_1', signal_logic.NOT('IN_0')),
-                         ('OUT_2', signal_logic.OR('IN_0', 'IN_1'))]
+        logic_clauses = [('OUT_0', signal_helper.OR('IN_0')),
+                         ('OUT_1', signal_helper.NOT('IN_0')),
+                         ('OUT_2', signal_helper.OR('IN_0', 'IN_1'))]
         name_mapper = signal_logic.NameMapper(port_expander_1,
                                               inputs,
                                               outputs)
@@ -53,7 +54,7 @@ class BasicTest(unittest.TestCase):
                    '', '', '', '', '', '', '', '']
 
         # TODO(bowdidge): be able to have single value.
-        logic_clauses = [('OUT_0', signal_logic.OR('IN_0', 'IN_1'))]
+        logic_clauses = [('OUT_0', signal_helper.OR('IN_0', 'IN_1'))]
 
         name_mapper = signal_logic.NameMapper(port_expander_1,
                                               inputs,
@@ -95,8 +96,8 @@ class BasicTest(unittest.TestCase):
                    '', '', '', '', '', '', '', '']
 
         # TODO(bowdidge): be able to have single value.
-        logic_clauses = [('OUT_0', signal_logic.OR('IN_0')),
-                         ('OUT_1', signal_logic.NOT('OUT_0'))]
+        logic_clauses = [('OUT_0', signal_helper.OR('IN_0')),
+                         ('OUT_1', signal_helper.NOT('OUT_0'))]
 
         name_mapper = signal_logic.NameMapper(port_expander_1,
                                               inputs,
@@ -133,7 +134,7 @@ class BasicTest(unittest.TestCase):
                    '', '', '', '', '', '', '', '']
 
         # TODO(bowdidge): be able to have single value.
-        logic_clauses = [('OUT_0', signal_logic.AND('IN_0', 'IN_1'))]
+        logic_clauses = [('OUT_0', signal_helper.AND('IN_0', 'IN_1'))]
 
         name_mapper = signal_logic.NameMapper(port_expander_1,
                                               inputs,
@@ -207,8 +208,8 @@ class BasicTest(unittest.TestCase):
                    '', '', '', '', '', '', '', '',
                    '', '', '', '', '', '', '', '']
 
-        logic_clauses = [('W1R', signal_logic.OR('BLOCK_1')),
-                         ('W1G', signal_logic.NOT('W1R'))]
+        logic_clauses = [('W1R', signal_helper.OR('BLOCK_1')),
+                         ('W1G', signal_helper.NOT('W1R'))]
 
         name_mapper = signal_logic.NameMapper(port_expander_1, inputs, outputs)
         logic_thingy = signal_logic.Logic([name_mapper])
@@ -226,6 +227,22 @@ class BasicTest(unittest.TestCase):
         logic_thingy.poll()
         self.assertFalse(port_expander_1.get_output_value(0))
         self.assertTrue(port_expander_1.get_output_value(1))
+
+    def testLayoutConfiguration(self):
+        """Verify that the production layout configuration in layout.py loads and polls cleanly."""
+        import layout
+        mappers = [
+            signal_logic.NameMapper(
+                mock_port_expander.PortExpander(c['address'], None),
+                c['inputs'],
+                c['outputs']
+            )
+            for c in layout.EXPANDERS
+        ]
+        logic_engine = signal_logic.Logic(mappers)
+        logic_engine.set_logic(layout.LOGIC_CLAUSES)
+        # Should evaluate all rules without raising KeyError or unhandled exceptions
+        logic_engine.poll()
 
 if __name__ == '__main__':
     unittest.main()
