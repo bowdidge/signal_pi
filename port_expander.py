@@ -1,6 +1,10 @@
 #!/usr/bin/python
 #
-# Control signals with logic.
+# Logic for manipulating I/O device connected to signals.
+#
+# In this case, we're manipulating a Model Railroad Control Systems
+# IOX32 expander board, which uses two Microchip MCP23017 I2C I/O expander
+# chips to control 32 inputs and outputs.
 
 import sys
 import time
@@ -11,11 +15,11 @@ import rpi_lcd
 import smbus
 
 # Registers for GPIO Ports Bank=0
-IODIRA = 0x00 # pin dir reg
-IODIRB = 0x01
-IPOLA = 0x02
-IPOLB = 0x03
-GPINTENA = 0x04
+IODIRA = 0x00 # first line configuration register
+IODIRB = 0x01 # second line configuration register.
+IPOLA = 0x02  # first polarity inversion register.
+IPOLB = 0x03  # second polarity inversion register.
+GPINTENA = 0x04  # 
 GPINTENB = 0x05
 GPPUA = 0x0c
 GPPUB = 0x0d
@@ -27,7 +31,7 @@ OLATB = 0x15
 class PortExpander(object):
     """Support for Model Railroad Control Systems 32 port I/O expander.
     
-    Uses blah blah card.
+    Manipulates two MCP23017 chips on the same board via I2C.
     """
     def __init__(self, device, display_device):
         """Set up port expander.

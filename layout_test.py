@@ -18,7 +18,7 @@ class LayoutSmokeTest(unittest.TestCase):
         )
 
     def testLayoutStructure(self):
-        """Verify expanders and pin mappings instantiate correctly."""
+        """Verify expanders and line mappings instantiate correctly."""
         self.assertEqual(len(self.expanders), 4)
         expected_addresses = [0x20, 0x21, 0x22, 0x23]
         actual_addresses = [exp.device for exp in self.expanders]
@@ -43,8 +43,8 @@ class LayoutSmokeTest(unittest.TestCase):
         """When all blocks are clear and switches normal, mainline signals show green."""
         # Hardware inputs are high (True) when blocks are clear because detectors are reversed=True.
         for exp in self.expanders:
-            for pin in range(8):
-                exp.mock_set_input(pin, True)
+            for line in range(8):
+                exp.mock_set_input(line, True)
 
         self.logic_engine.poll()
 
@@ -76,14 +76,14 @@ class LayoutSmokeTest(unittest.TestCase):
         """Occupying BLOCK_1 must place protecting signals W1 and E1 at stop."""
         # Set all track clear initially
         for exp in self.expanders:
-            for pin in range(8):
-                exp.mock_set_input(pin, True)
+            for line in range(8):
+                exp.mock_set_input(line, True)
         self.logic_engine.poll()
 
         self.assertFalse(self.logic_engine.variable_value('W1R'))
         self.assertTrue(self.logic_engine.variable_value('W1G'))
 
-        # Drop BLOCK_1 low (hardware input 0 on expander 0x20 pulled low by train wheels)
+        # Drop BLOCK_1 low (hardware line 0 on expander 0x20 pulled low by train wheels)
         self.expanders[0].mock_set_input(0, False)
         self.logic_engine.poll()
 
@@ -97,7 +97,7 @@ class LayoutSmokeTest(unittest.TestCase):
             'Expected W1G to be False when BLOCK_1 is occupied'
         )
 
-        # Clear BLOCK_1 back to unoccupied (hardware pin high)
+        # Clear BLOCK_1 back to unoccupied (hardware line high)
         self.expanders[0].mock_set_input(0, True)
         self.logic_engine.poll()
 
@@ -112,8 +112,8 @@ class LayoutSmokeTest(unittest.TestCase):
         """
         # Set all track clear initially (hardware inputs high)
         for exp in self.expanders:
-            for pin in range(8):
-                exp.mock_set_input(pin, True)
+            for line in range(8):
+                exp.mock_set_input(line, True)
         self.logic_engine.poll()
 
         # In clear/normal state, these signals show green (Red is False, Green is True)
@@ -124,7 +124,7 @@ class LayoutSmokeTest(unittest.TestCase):
         self.assertFalse(self.logic_engine.variable_value('W3R'))
         self.assertTrue(self.logic_engine.variable_value('W3G'))
 
-        # Throw SW_GLEN_W (pin 5 on expander 0x20 pulled low)
+        # Throw SW_GLEN_W (line 5 on expander 0x20 pulled low)
         self.expanders[0].mock_set_input(5, False)
         self.logic_engine.poll()
 
@@ -154,7 +154,7 @@ class LayoutSmokeTest(unittest.TestCase):
             'Expected W3G to be False when SW_GLEN_W is thrown'
         )
 
-        # Restore switch to normal (pin 5 high)
+        # Restore switch to normal (line 5 high)
         self.expanders[0].mock_set_input(5, True)
         self.logic_engine.poll()
 
@@ -169,11 +169,11 @@ class LayoutSmokeTest(unittest.TestCase):
         """Train in single-track BLOCK_3 sets W3R, E3UR, and E4R to red, but leaves E2 and W4 green."""
         # Set all track clear initially (hardware inputs high)
         for exp in self.expanders:
-            for pin in range(8):
-                exp.mock_set_input(pin, True)
+            for line in range(8):
+                exp.mock_set_input(line, True)
         self.logic_engine.poll()
 
-        # Occupy BLOCK_3 (pin 2 on expander 0x20 pulled low)
+        # Occupy BLOCK_3 (line 2 on expander 0x20 pulled low)
         self.expanders[0].mock_set_input(2, False)
         self.logic_engine.poll()
 
