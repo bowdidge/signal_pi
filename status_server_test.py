@@ -132,21 +132,24 @@ class LayoutIntegrationWithTrackerTest(unittest.TestCase):
         )
 
         snapshot = tracker.get_snapshot()
-        self.assertIn('BLOCK_1', snapshot['inputs'])
+        self.assertIn('SW_ALMA_E', snapshot['inputs'])
         self.assertIn('W1R', snapshot['outputs'])
 
+        logic_engine.poll()
+
         # Drop line 0 (BLOCK_1) to trigger state changes
-        expanders[0].mock_set_input(0, False)
+        expanders[0].mock_set_input(4, True)
         logic_engine.poll()
 
         snapshot = tracker.get_snapshot()
-        self.assertTrue(snapshot['inputs']['BLOCK_1'])
+        self.assertTrue(snapshot['inputs']['SW_ALMA_E'])
         self.assertTrue(snapshot['outputs']['W1R'])
 
-        # Solution 2: Verify message is queued for the main thread to service sequentially
+        # Verify message is queued for the main thread to service sequentially
+        # LCD should only see input changes.
         pending_msg = tracker.pop_pending_lcd_message()
         self.assertIsNotNone(pending_msg)
-        self.assertIn('OUT:', pending_msg[0])
+        self.assertIn('IN: SW_ALMA_E', pending_msg[0])
 
 
 if __name__ == '__main__':
