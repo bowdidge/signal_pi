@@ -1,8 +1,9 @@
 Python code to define signal logic on a model railroad.
 
-#Summary
+# Summary
 
-Details on project here:
+For a high-level description of the signaling system and the hardware
+this runs on, check out
 https://vasonabranch.blogspot.com/2024/02/big-changes-at-signal-gulch.html
 
 This code implements a simple model railroad signal controller.
@@ -14,8 +15,9 @@ Goals for this implementation:
 * Avoid needing a PC to run signals.
 * Run on a Raspberry Pi for easier debugging compared with Arduino or
 hardcoded signals.
-* Easy description and changes to signals.
-* Programmed in interpreted language 
+* Easy description and changes to signals in terms of inputs and outputs
+rather than signals.  For now, this is for simplicity, though expanding
+this to understand the signaling system would be good.
 
 # Environment
 This code in normal use runs on a Raspberry Pi 4 with IO expander cards
@@ -23,7 +25,7 @@ using the Microchip MCP23017 connected via I2C.
 
 This code should be testable on arbitrary Python implementations.
 
-#Sample Layout
+# Sample Layout
 
 The built-in configuration is for signals on part of the Vasona Branch,
 https://www.vasonabranch.com/railroad/vasona.html
@@ -34,7 +36,7 @@ block signals (ABS).  ABS signals only show occupancy, indicating whether anothe
 not show whether the train is permitted to go; permission on this branch
 came from telegraphed train orders.
 
-#Implementation
+# Implementation
 
 The logic here was inspired by the early 2000's Team Digital SIC24 signal
 interface controller boards.  These used a small microcontroller to
@@ -51,7 +53,7 @@ have based on inputs and other outputs.
 
 Inputs and outputs are read and written via PortMapper class.
 
-#Known Issues
+# Known Issues
 
 Circular dependencies in outputs are handled by checking the current output
 state at the time of evaluating the logic, and re-evaluating on every poll.
