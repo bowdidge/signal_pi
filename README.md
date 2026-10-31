@@ -52,6 +52,9 @@ have based on inputs and other outputs.
 Inputs and outputs are read and written via PortMapper class.
 
 #Known Issues
+
 Circular dependencies in outputs are handled by checking the current output
 state at the time of evaluating the logic, and re-evaluating on every poll.
 This can allow flashing lights to be done.
+
+Change to have LCD display use status messages is half done.
