@@ -1,5 +1,8 @@
 Python code to define signal logic on a model railroad.
 
+Details on project here:
+https://vasonabranch.blogspot.com/2024/02/big-changes-at-signal-gulch.html
+
 The Logic class allows defining the value each output should
 have based on inputs and other outputs.
 
