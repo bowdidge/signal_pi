@@ -457,5 +457,99 @@ class BasicTest(unittest.TestCase):
         self.assertTrue(port_expander_1.get_output_value(1))
         self.assertFalse(port_expander_1.get_output_value(2))
 
+class SetInputTest(unittest.TestCase):
+    """Tests for the Logic.set_input / NameMapper.set_input API."""
+
+    # Reusable 24-slot output list (only first slot named).
+    _OUTPUTS = ['OUT_0', '', '', '', '', '', '', '',
+                '', '', '', '', '', '', '', '',
+                '', '', '', '', '', '', '', '']
+
+    def _make_engine(self, inputs, logic_clauses=None):
+        """Build a single-expander Logic engine for testing."""
+        port_expander = mock_port_expander.PortExpander(0x1)
+        name_mapper = signal_logic.NameMapper(port_expander, inputs, self._OUTPUTS)
+        engine = signal_logic.Logic([name_mapper])
+        engine.set_logic(logic_clauses or [])
+        return port_expander, engine
+
+    def testSetInputByName(self):
+        """Logic.set_input sets a named (non-reversed) input; poll propagates to output."""
+        inputs = [{'name': 'BLOCK_1', 'reversed': False}, '', '', '', '', '', '', '']
+        port_expander, engine = self._make_engine(
+            inputs, [('OUT_0', signal_helper.OR('BLOCK_1'))])
+
+        engine.set_input('BLOCK_1', True)
+        engine.poll()
+        self.assertTrue(port_expander.get_output_value(0))
+
+        engine.set_input('BLOCK_1', False)
+        engine.poll()
+        self.assertFalse(port_expander.get_output_value(0))
+
+    def testSetInputByNameReversed(self):
+        """set_input writes the inverse hardware level for reversed=True inputs.
+
+        Callers always pass the logical value (True = occupied/thrown);
+        set_input must translate that to the correct raw hardware level.
+        """
+        inputs = [{'name': 'BLOCK_1', 'reversed': True}, '', '', '', '', '', '', '']
+        port_expander, engine = self._make_engine(
+            inputs, [('OUT_0', signal_helper.OR('BLOCK_1'))])
+
+        # Logical True (occupied) -> hardware pulled low -> reversed reads True -> OUT_0 True.
+        engine.set_input('BLOCK_1', True)
+        engine.poll()
+        self.assertTrue(port_expander.get_output_value(0))
+
+        # Logical False (clear) -> hardware pulled high -> reversed reads False -> OUT_0 False.
+        engine.set_input('BLOCK_1', False)
+        engine.poll()
+        self.assertFalse(port_expander.get_output_value(0))
+
+    def testSetInputUnknownNameRaisesKeyError(self):
+        """set_input raises KeyError for a name not registered as an input."""
+        inputs = ['IN_0', '', '', '', '', '', '', '']
+        _, engine = self._make_engine(inputs)
+
+        with self.assertRaises(KeyError):
+            engine.set_input('DOES_NOT_EXIST', True)
+
+    def testSetInputRejectsOutputName(self):
+        """set_input raises KeyError for a name that is an output, not an input.
+
+        Output names appear in name_to_name_mapper but must not be settable
+        as inputs; doing so would silently bypass the hardware abstraction.
+        """
+        inputs = ['IN_0', '', '', '', '', '', '', '']
+        _, engine = self._make_engine(inputs)
+
+        with self.assertRaises(KeyError):
+            engine.set_input('OUT_0', True)
+
+    def testOrSingleCallableTerm(self):
+        """OR(NOT(x)) is equivalent to NOT(x) -- callable as the sole argument."""
+        inputs = ['IN_0', '', '', '', '', '', '', '']
+        port_expander, engine = self._make_engine(
+            inputs, [('OUT_0', signal_helper.OR(signal_helper.NOT('IN_0')))])
+
+        # IN_0 starts False -> NOT(False) -> True
+        engine.poll()
+        self.assertTrue(port_expander.get_output_value(0))
+
+        # IN_0 goes True -> NOT(True) -> False
+        port_expander.mock_set_input(0, True)
+        engine.poll()
+        self.assertFalse(port_expander.get_output_value(0))
+
+    def testVariableValueUnknownName(self):
+        """variable_value returns None for an unregistered name rather than raising."""
+        inputs = ['IN_0', '', '', '', '', '', '', '']
+        _, engine = self._make_engine(inputs)
+
+        result = engine.variable_value('NO_SUCH_SIGNAL')
+        self.assertIsNone(result)
+
+
 if __name__ == '__main__':
     unittest.main()

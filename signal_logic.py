@@ -63,6 +63,28 @@ class NameMapper(object):
         print('Unknown input %s in %s' % (name, self.inputs))
         return None
 
+    def set_input(self, name, value):
+        """Set a mock input value by name (for testing only).
+
+        Applies the reversal so callers pass the logical value
+        (True = occupied/thrown) rather than the raw hardware level.
+        Returns True if the name was found, False otherwise.
+        """
+        index = 0
+        for inp in self.inputs:
+            if type(inp) == dict:
+                input_name = inp.get('name')
+                reversed = inp.get('reversed', False)
+            else:
+                input_name = inp
+                reversed = False
+            if name == input_name:
+                hw_value = (not value) if reversed else value
+                self.port_expander.mock_set_input(index, hw_value)
+                return True
+            index += 1
+        return False
+
     def set_output(self, name, value):
         # TODO(bowdidge): Avoid rewriting value if not changed.
         if name not in self.outputs:
@@ -135,6 +157,18 @@ class Logic(object):
             return expression(self)
         return self.variable_value(expression)
             
+    def set_input(self, name, value):
+        """Set a named input to a logical value (for testing).
+
+        Looks up which NameMapper owns the input and delegates to it,
+        handling any hardware-level reversal automatically.
+        Raises KeyError if the name is not a registered input.
+        """
+        name_mapper = self.name_to_name_mapper.get(name)
+        if name_mapper is None or not name_mapper.is_input(name):
+            raise KeyError('Unknown input name: %s' % name)
+        name_mapper.set_input(name, value)
+
     def poll(self):
         # Go through all logic terms and calculate the new value.
         # Undefined behavior if circular dependencies in outputs.

@@ -12,10 +12,26 @@ import mock_port_expander
 class LayoutSmokeTest(unittest.TestCase):
     """Smoke test ensuring the Vasona Branch layout configuration minimally works."""
 
+    # All named inputs in the layout and their logical "clear/normal" value.
+    _CLEAR_STATE = {
+        'BLOCK_1': False, 'BLOCK_2': False, 'BLOCK_3': False, 'BLOCK_4': False,
+        'SW_ALMA_E': False,
+        'SW_GLEN_W': False, 'SW_GLEN_E': False,
+        'BLOCK_5': False, 'BLOCK_6': False, 'BLOCK_7': False, 'BLOCK_8': False,
+        'SW_ALMA_W': False,
+        'SW_LG_E': False, 'SW_LG_W': False,
+        'SW_VASONA': False,
+    }
+
     def setUp(self):
         self.logic_engine, self.expanders = layout.setup_layout(
             mock_port_expander.PortExpander
         )
+
+    def _set_all_clear(self):
+        """Set every input to its logical clear/normal state."""
+        for name, value in self._CLEAR_STATE.items():
+            self.logic_engine.set_input(name, value)
 
     def testLayoutStructure(self):
         """Verify expanders and line mappings instantiate correctly."""
@@ -41,17 +57,7 @@ class LayoutSmokeTest(unittest.TestCase):
 
     def testAllClearTrackProducesGreens(self):
         """When all blocks are clear and switches normal, mainline signals show green."""
-        # Hardware inputs are high (True) when blocks are clear because detectors are reversed=True.
-        for exp in self.expanders:
-            for line in range(8):
-                exp.mock_set_input(line, True)
-
-        # TODO(bowdidge): Automatically set reversed inputs to False.
-        # SW_ALMA_E is reversed.
-        self.expanders[0].mock_set_input(4, False)
-        # SW_LG_E is reversed.
-        self.expanders[2].mock_set_input(5, False)
-
+        self._set_all_clear()
         self.logic_engine.poll()
 
         mainline_greens = [
@@ -80,24 +86,14 @@ class LayoutSmokeTest(unittest.TestCase):
 
     def testOccupancyDropTriggersStop(self):
         """Occupying BLOCK_1 must place protecting signals W1 and E1 at stop."""
-        # Set all track clear initially
-        for exp in self.expanders:
-            for line in range(8):
-                exp.mock_set_input(line, True)
-
-        # TODO(bowdidge): Automatically set reversed inputs to False.
-        # SW_ALMA_E is reversed.
-        self.expanders[0].mock_set_input(4, False)
-        # SW_LG_E is reversed.
-        self.expanders[2].mock_set_input(5, False)
-
+        self._set_all_clear()
         self.logic_engine.poll()
 
         self.assertFalse(self.logic_engine.variable_value('W1R'))
         self.assertTrue(self.logic_engine.variable_value('W1G'))
 
-        # Drop BLOCK_1 low (hardware line 0 on expander 0x20 pulled low by train wheels)
-        self.expanders[0].mock_set_input(0, False)
+        # Occupy BLOCK_1
+        self.logic_engine.set_input('BLOCK_1', True)
         self.logic_engine.poll()
 
         # Signal must show red (W1R True, W1G False)
@@ -110,8 +106,8 @@ class LayoutSmokeTest(unittest.TestCase):
             'Expected W1G to be False when BLOCK_1 is occupied'
         )
 
-        # Clear BLOCK_1 back to unoccupied (hardware line high)
-        self.expanders[0].mock_set_input(0, True)
+        # Clear BLOCK_1 back to unoccupied
+        self.logic_engine.set_input('BLOCK_1', False)
         self.logic_engine.poll()
 
         self.assertFalse(self.logic_engine.variable_value('W1R'))
@@ -123,17 +119,7 @@ class LayoutSmokeTest(unittest.TestCase):
         Note: Signal heads 3 and 4 in this layout are single-headed westbound (W3R)
         and eastbound (E4R), while signal 3 eastbound has an upper head (E3UR).
         """
-        # Set all track clear initially (hardware inputs high)
-        for exp in self.expanders:
-            for line in range(8):
-                exp.mock_set_input(line, True)
-
-        # TODO(bowdidge): Automatically set reversed inputs to False.
-        # SW_ALMA_E is reversed.
-        self.expanders[0].mock_set_input(4, False)
-        # SW_LG_E is reversed.
-        self.expanders[2].mock_set_input(5, False)
-
+        self._set_all_clear()
         self.logic_engine.poll()
 
         # In clear/normal state, these signals show green (Red is False, Green is True)
@@ -144,8 +130,8 @@ class LayoutSmokeTest(unittest.TestCase):
         self.assertFalse(self.logic_engine.variable_value('W3R'))
         self.assertTrue(self.logic_engine.variable_value('W3G'))
 
-        # Throw SW_GLEN_W (line 5 on expander 0x20 pulled low)
-        self.expanders[0].mock_set_input(5, False)
+        # Throw SW_GLEN_W
+        self.logic_engine.set_input('SW_GLEN_W', True)
         self.logic_engine.poll()
 
         # E3UR, E4R, and W3R must now show red (True) and their greens must be False
@@ -174,8 +160,8 @@ class LayoutSmokeTest(unittest.TestCase):
             'Expected W3G to be False when SW_GLEN_W is thrown'
         )
 
-        # Restore switch to normal (line 5 high)
-        self.expanders[0].mock_set_input(5, True)
+        # Restore switch to normal
+        self.logic_engine.set_input('SW_GLEN_W', False)
         self.logic_engine.poll()
 
         self.assertFalse(self.logic_engine.variable_value('E3UR'))
@@ -187,21 +173,11 @@ class LayoutSmokeTest(unittest.TestCase):
 
     def testBlock3OccupancySignals(self):
         """Train in single-track BLOCK_3 sets W3R, E3UR, and E4R to red, but leaves E2 and W4 green."""
-        # Set all track clear initially (hardware inputs high)
-        for exp in self.expanders:
-            for line in range(8):
-                exp.mock_set_input(line, True)
-
-        # TODO(bowdidge): Automatically set reversed inputs to False.
-        # SW_ALMA_E is reversed.
-        self.expanders[0].mock_set_input(4, False)
-        # SW_LG_E is reversed.
-        self.expanders[2].mock_set_input(5, False)
-
+        self._set_all_clear()
         self.logic_engine.poll()
 
-        # Occupy BLOCK_3 (line 2 on expander 0x20 pulled low)
-        self.expanders[0].mock_set_input(2, False)
+        # Occupy BLOCK_3
+        self.logic_engine.set_input('BLOCK_3', True)
         self.logic_engine.poll()
 
         # Opposing and protecting signals for the block 3/4 single-track section must show red (stop):
@@ -268,6 +244,229 @@ class LayoutSmokeTest(unittest.TestCase):
             self.logic_engine.variable_value('W4LG'),
             'Expected W4LG to be True (green)'
         )
+
+
+    def testCamp8SignalVasonaSwitch(self):
+        """Check that the Camp8R signal at Vasona Junction is correct.
+
+        Camp8R has unique logic because it's a junction, and the signal
+        stopping traffic from the divergent route.
+
+        In the normal/clear state SW_VASONA=False, so
+        NOT(SW_VASONA)=True and Camp8R is always True (protecting the
+        Vasona siding). Throwing SW_VASONA clears Camp8R; occupying
+        BLOCK_8 brings it back Tru regardless.
+
+        """
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        # Normal position: NOT(SW_VASONA=False) = True -> Camp8R True (siding protected).
+        self.assertTrue(self.logic_engine.variable_value('Camp8R'),
+                        'Camp8R should be red when SW_VASONA is in normal position')
+        self.assertFalse(self.logic_engine.variable_value('Camp8G'))
+
+        # Throw SW_VASONA: NOT(True) = False, BLOCK_8 still clear -> Camp8R False.
+        self.logic_engine.set_input('SW_VASONA', True)
+        self.logic_engine.poll()
+        self.assertFalse(self.logic_engine.variable_value('Camp8R'),
+                         'Camp8R should clear when SW_VASONA is thrown and block is empty')
+        self.assertTrue(self.logic_engine.variable_value('Camp8G'))
+
+        # Occupy BLOCK_8 while switch thrown -> Camp8R True again.
+        self.logic_engine.set_input('BLOCK_8', True)
+        self.logic_engine.poll()
+        self.assertTrue(self.logic_engine.variable_value('Camp8R'),
+                        'Camp8R should be red when BLOCK_8 is occupied regardless of switch')
+        self.assertFalse(self.logic_engine.variable_value('Camp8G'))
+
+    def testSignalsAtPassingSiding(self):
+        """Train in BLOCK_2 sets W2UR, W2LR, E2UR, and E3LR to red."""
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        self.logic_engine.set_input('BLOCK_2', True)
+        self.logic_engine.poll()
+
+        # Signals protecting entry to block will be red.
+        # E3LR is red to warn oncoming train that next signal will be  red.
+        for red in ['W2UR', 'W2LR', 'E2UR', 'E3LR']:
+            self.assertTrue(self.logic_engine.variable_value(red),
+                            'Expected %s to be red when BLOCK_2 is occupied' % red)
+        for green in ['W2UG', 'W2LG', 'E2UG', 'E3LG']:
+            self.assertFalse(self.logic_engine.variable_value(green),
+                             'Expected %s to be off when BLOCK_2 is occupied' % green)
+
+        # Signals protecting other blocks must remain green.
+        for unaffected_green in ['W1G', 'E1G', 'E3UG']:
+            self.assertTrue(self.logic_engine.variable_value(unaffected_green),
+                            'Expected %s to stay green when only BLOCK_2 is occupied' % unaffected_green)
+
+    def testSignalsInSingleTrackMultipleBlocks(self):
+        """Train in BLOCK_4 sets W3R, W4UR, W4LR, E4R, and E5LR to red."""
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        self.logic_engine.set_input('BLOCK_4', True)
+        self.logic_engine.poll()
+
+        for red in ['W3R', 'W4UR', 'W4LR', 'E4R', 'E5LR']:
+            self.assertTrue(self.logic_engine.variable_value(red),
+                            'Expected %s to be red when BLOCK_4 is occupied' % red)
+        for green in ['W3G', 'W4UG', 'W4LG', 'E4G', 'E5LG']:
+            self.assertFalse(self.logic_engine.variable_value(green),
+                             'Expected %s to be off when BLOCK_4 is occupied' % green)
+
+    def testSignalsAtPassingSiding2(self):
+        """Check Alma siding is correct too.
+
+        rain in BLOCK_5 sets W5UR, W5LR, E5UR, and E5LR to red.
+        """
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        self.logic_engine.set_input('BLOCK_5', True)
+        self.logic_engine.poll()
+
+        for red in ['W5UR', 'W5LR', 'E5UR', 'E5LR']:
+            self.assertTrue(self.logic_engine.variable_value(red),
+                            'Expected %s to be red when BLOCK_5 is occupied' % red)
+        for green in ['W5UG', 'W5LG', 'E5UG', 'E5LG']:
+            self.assertFalse(self.logic_engine.variable_value(green),
+                             'Expected %s to be off when BLOCK_5 is occupied' % green)
+
+        # Adjacent signals protecting trains leaving the block should stay green.
+        for unaffected_green in ['W4UG', 'E6UG']:
+            self.assertTrue(self.logic_engine.variable_value(unaffected_green),
+                            'Expected %s to stay green when only BLOCK_5 is occupied' % unaffected_green)
+
+    def testBlock6OccupancySignals(self):
+        """Train in BLOCK_6 sets W5LR, W6R, and E6UR to red."""
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        self.logic_engine.set_input('BLOCK_6', True)
+        self.logic_engine.poll()
+
+        for red in ['W5LR', 'W6R', 'E6UR']:
+            self.assertTrue(self.logic_engine.variable_value(red),
+                            'Expected %s to be red when BLOCK_6 is occupied' % red)
+        for green in ['W5LG', 'W6G', 'E6UG']:
+            self.assertFalse(self.logic_engine.variable_value(green),
+                             'Expected %s to be off when BLOCK_6 is occupied' % green)
+
+    def testBlock7OccupancySignals(self):
+        """Train in BLOCK_7 sets W7UR, W7LR, and E7R to red.
+
+        Note: W7LR depends on W7UR, but W7LR is listed before W7UR in
+        LOGIC_CLAUSES (layout.py lines 96/98), so W7LR picks up the updated
+        W7UR value one poll after W7UR itself changes.  Two polls are required.
+        """
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        self.logic_engine.set_input('BLOCK_7', True)
+        self.logic_engine.poll()
+
+        # W7UR and E7R are resolved immediately from raw inputs.
+        for red in ['W7UR', 'E7R']:
+            self.assertTrue(self.logic_engine.variable_value(red),
+                            'Expected %s to be red when BLOCK_7 is occupied' % red)
+        for green in ['W7UG', 'E7G']:
+            self.assertFalse(self.logic_engine.variable_value(green),
+                             'Expected %s to be off when BLOCK_7 is occupied' % green)
+
+        # W7LR depends on W7UR, which is listed after W7LR in LOGIC_CLAUSES,
+        # so it takes a second poll to propagate.
+        self.logic_engine.poll()
+        self.assertTrue(self.logic_engine.variable_value('W7LR'),
+                        'Expected W7LR to be red after second poll when BLOCK_7 is occupied')
+        self.assertFalse(self.logic_engine.variable_value('W7LG'),
+                         'Expected W7LG to be off after second poll when BLOCK_7 is occupied')
+
+    def testBlock8OccupancySignals(self):
+        """Train in BLOCK_8 sets W7LR, W8R, and E8R to red."""
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        self.logic_engine.set_input('BLOCK_8', True)
+        self.logic_engine.poll()
+
+        for red in ['W7LR', 'W8R', 'E8R']:
+            self.assertTrue(self.logic_engine.variable_value(red),
+                            'Expected %s to be red when BLOCK_8 is occupied' % red)
+        for green in ['W7LG', 'W8G', 'E8G']:
+            self.assertFalse(self.logic_engine.variable_value(green),
+                             'Expected %s to be off when BLOCK_8 is occupied' % green)
+
+    def testThrownSwitchAlmaEast(self):
+        """Check that a switch thrown to the siding sets correct signals red.
+
+        The signals at the switch should be red, as well as the signal
+        protecting the single track block leading into the siding.
+
+        For east end of Alma, sets W3R, W4UR,
+        W5UR, E4R, and E5LR to red.  Note all signals from Alma to Glenwood
+        westbound are red because no train should leave Glenwood if siding
+        is open in Alma.
+        """
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        self.logic_engine.set_input('SW_ALMA_E', True)
+        self.logic_engine.poll()
+
+        for red in ['W3R', 'W4UR', 'W5UR', 'E4R', 'E5LR']:
+            self.assertTrue(self.logic_engine.variable_value(red),
+                            'Expected %s to be red when SW_ALMA_E is thrown' % red)
+        for green in ['W3G', 'W4UG', 'W5UG', 'E4G', 'E5LG']:
+            self.assertFalse(self.logic_engine.variable_value(green),
+                             'Expected %s to be off when SW_ALMA_E is thrown' % green)
+
+        # Restore switch; signals must return to green.
+        self.logic_engine.set_input('SW_ALMA_E', False)
+        self.logic_engine.poll()
+        for green in ['W3G', 'W4UG', 'W5UG', 'E4G', 'E5LG']:
+            self.assertTrue(self.logic_engine.variable_value(green),
+                            'Expected %s to return to green after SW_ALMA_E restored' % green)
+
+    def testSimultaneousOccupancyAndThrownSwitch(self):
+        """BLOCK_1 occupied and SW_GLEN_W thrown simultaneously must keep all
+        affected signals red -- faults must accumulate via OR, not mask each other.
+        """
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        self.logic_engine.set_input('BLOCK_1', True)
+        self.logic_engine.set_input('SW_GLEN_W', True)
+        self.logic_engine.poll()
+
+        for red in ['W1R', 'W3R', 'E3UR', 'E4R']:
+            self.assertTrue(self.logic_engine.variable_value(red),
+                            'Expected %s to be red under simultaneous BLOCK_1 + SW_GLEN_W fault' % red)
+
+    def testClearBlockRestoresGreenInOnePoll(self):
+        """Check signals go green after block goes vacant.
+
+        Guards against any 'signal stuck red' regression.
+        """
+        self._set_all_clear()
+        self.logic_engine.poll()
+
+        # Introduce a fault
+        self.logic_engine.set_input('BLOCK_1', True)
+        self.logic_engine.poll()
+        self.assertTrue(self.logic_engine.variable_value('W1R'))
+        self.assertFalse(self.logic_engine.variable_value('W1G'))
+
+        # Clear fault -- one poll is all that should be needed
+        self.logic_engine.set_input('BLOCK_1', False)
+        self.logic_engine.poll()
+
+        self.assertFalse(self.logic_engine.variable_value('W1R'),
+                         'W1R should return to False after BLOCK_1 clears')
+        self.assertTrue(self.logic_engine.variable_value('W1G'),
+                        'W1G should return to True after BLOCK_1 clears')
 
 
 if __name__ == '__main__':
