@@ -125,3 +125,18 @@ LOGIC_CLAUSES = [
     ('E8R', signal_helper.OR('BLOCK_8', 'SW_VASONA')),
     ('E8G', signal_helper.NOT('E8R')),
 ]
+
+
+def setup_layout(port_expander_class, lcd_panel=None):
+    """Build and wire the Vasona Branch layout.
+
+    Args:
+        port_expander_class: PortExpander class to instantiate (hardware or mock).
+        lcd_panel: Optional display device.
+
+    Returns:
+        (logic_engine, expanders_list)
+    """
+    import signal_logic
+    return signal_logic.build_engine(EXPANDERS, LOGIC_CLAUSES, port_expander_class, lcd_panel)
+

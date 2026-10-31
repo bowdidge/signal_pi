@@ -231,16 +231,8 @@ class BasicTest(unittest.TestCase):
     def testLayoutConfiguration(self):
         """Verify that the production layout configuration in layout.py loads and polls cleanly."""
         import layout
-        mappers = [
-            signal_logic.NameMapper(
-                mock_port_expander.PortExpander(c['address'], None),
-                c['inputs'],
-                c['outputs']
-            )
-            for c in layout.EXPANDERS
-        ]
-        logic_engine = signal_logic.Logic(mappers)
-        logic_engine.set_logic(layout.LOGIC_CLAUSES)
+        logic_engine, expanders = layout.setup_layout(mock_port_expander.PortExpander)
+        self.assertEqual(len(expanders), 4)
         # Should evaluate all rules without raising KeyError or unhandled exceptions
         logic_engine.poll()
 

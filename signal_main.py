@@ -48,15 +48,9 @@ def main():
 
     atexit.register(lambda: shutdown(lcd_panel, None))
 
-    expanders = []
-    name_mappers = []
-    for exp_cfg in layout.EXPANDERS:
-        expander = port_expander.PortExpander(exp_cfg['address'], lcd_panel)
-        expander.setup()
-        expanders.append(expander)
-        name_mappers.append(
-            signal_logic.NameMapper(expander, exp_cfg['inputs'], exp_cfg['outputs'])
-        )
+    logic_thingy, expanders = layout.setup_layout(
+        port_expander.PortExpander, lcd_panel=lcd_panel
+    )
 
     lcd_panel.display('Testing lights', '')
     print('Testing all lights - flashing all pairs.')
@@ -89,9 +83,6 @@ def main():
     for expander in expanders:
         mask = 0x5500 if expander.device % 2 == 0 else 0x5555
         expander.set_outputs(mask)
-
-    logic_thingy = signal_logic.Logic(name_mappers, lcd_panel)
-    logic_thingy.set_logic(layout.LOGIC_CLAUSES)
 
     iter = 0
     try:

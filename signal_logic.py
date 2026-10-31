@@ -134,3 +134,30 @@ class Logic(object):
             output_name, predicate = logic_term
             self.logic_eval(output_name, predicate)
 
+
+def build_engine(expanders_config, logic_clauses, port_expander_class, lcd_panel=None):
+    """Instantiate PortExpanders, NameMappers, and wire them into a Logic engine.
+
+    Args:
+        expanders_config: List of expander definition dicts with address, inputs, outputs.
+        logic_clauses: List of (output_name, predicate) logic tuples.
+        port_expander_class: PortExpander class to instantiate (hardware or mock).
+        lcd_panel: Optional display panel.
+
+    Returns:
+        (logic_engine, expanders_list)
+    """
+    expanders = []
+    name_mappers = []
+    for exp_cfg in expanders_config:
+        expander = port_expander_class(exp_cfg['address'], lcd_panel)
+        expander.setup()
+        expanders.append(expander)
+        name_mappers.append(
+            NameMapper(expander, exp_cfg['inputs'], exp_cfg['outputs'])
+        )
+
+    logic_engine = Logic(name_mappers, lcd_panel)
+    logic_engine.set_logic(logic_clauses)
+    return logic_engine, expanders
+
