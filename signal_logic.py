@@ -32,22 +32,23 @@ class NameMapper(object):
                     return True
         return False
     
-    def test_input(self, name):
-        """Returns input state (True for high), or None if doesn't exist.
+    def test_input_or_output(self, name):
+        """Returns the current state of the named input or output.
 
-        If input is known to be reversed, then return the opposite.
+        If input is defined to be inverted, then return the inverse value
+        of the output.
         """
         index = 0
         for input in self.inputs:
             if type(input) == dict:
                 input_name = input.get('name')
-                reversed = input.get('reversed', False)
+                inverted = input.get('inverted', False)
             else:
                 input_name = input
-                reversed = False
+                inverted = False
             if name == input_name:
                 value = self.port_expander.get_input(index)
-                if reversed:
+                if inverted:
                     return not(bool(value))
                 else:
                     return bool(value)
@@ -74,12 +75,12 @@ class NameMapper(object):
         for inp in self.inputs:
             if type(inp) == dict:
                 input_name = inp.get('name')
-                reversed = inp.get('reversed', False)
+                inverted = inp.get('inverted', False)
             else:
                 input_name = inp
-                reversed = False
+                inverted = False
             if name == input_name:
-                hw_value = (not value) if reversed else value
+                hw_value = (not value) if inverted else value
                 self.port_expander.mock_set_input(index, hw_value)
                 return True
             index += 1
@@ -107,10 +108,10 @@ class Logic(object):
         for name_mapper in self.name_mappers:
             for input in name_mapper.inputs:
                 input_name = input
-                reversed = False
+                inverted = False
                 if type(input) == dict:
                     input_name = input.get('name')
-                    reversed = input.get('reversed', False)
+                    inverted = input.get('inverted', False)
                 if input_name:
                     self.name_to_name_mapper[input_name] = name_mapper
                     all_inputs.append(input_name)
@@ -141,7 +142,7 @@ class Logic(object):
         except KeyError as e:
             print('Unknown key %s in %s' % (input_name, self.name_to_name_mapper))
             return None
-        value = name_mapper.test_input(input_name)
+        value = name_mapper.test_input_or_output(input_name)
 
         if name_mapper.is_input(input_name):
             past_value = self.past_values.get(input_name)

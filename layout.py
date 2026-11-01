@@ -9,21 +9,30 @@ import signal_logic
 # Expander configuration.
 # Each card has two chips, responding to an even address (with 8 inputs on Port A
 # and 8 outputs on Port B) and an odd address (with 16 outputs across Ports A & B).
+# Note that the 8 inputs/8 outputs on even chips is a wiring choice for the
+# layout.  Other configurations of port expanders could be set up differently.
 #
 # For block occupancy, input is brought low if block is occupied.
 # For switches, generally depends on how switch was wired.
+#
+# Inputs are inverted if the value goes low when active - for a block sensor,
+# an inverted input means the line goes low if the block is occupied.
+# For a switch, the inverted input means the line goes low if the switch
+# is set to the siding.
+
 EXPANDERS = [
     {
         'address': 0x20,
         'inputs': [
-            {'name': 'BLOCK_1', 'reversed': True},
-            {'name': 'BLOCK_2', 'reversed': True},
-            {'name': 'BLOCK_3', 'reversed': True},
-            {'name': 'BLOCK_4', 'reversed': True},
-            {'name': 'SW_ALMA_E', 'reversed': False},
-            {'name': 'SW_GLEN_W', 'reversed': True},
-            {'name': 'SW_GLEN_E', 'reversed': True},
-            {'unused': True},
+            {'name': 'BLOCK_1', 'inverted': True},
+            {'name': 'BLOCK_2', 'inverted': True},
+            {'name': 'BLOCK_3', 'inverted': True},
+            {'name': 'BLOCK_4', 'inverted': True},
+            {'name': 'SW_ALMA_E', 'inverted': False},
+            {'name': 'SW_GLEN_W', 'inverted': True},
+            {'name': 'SW_GLEN_E', 'inverted': True},
+            # Consider reusing for Sunset Park spur.
+            {'name': 'unused'},
         ],
         'outputs': [
             'W1R', 'W1G', 'W2UR', 'W2UG',
@@ -43,14 +52,14 @@ EXPANDERS = [
     {
         'address': 0x22,
         'inputs': [
-            {'name': 'BLOCK_5', 'reversed': True},
-            {'name': 'BLOCK_6', 'reversed': True},
-            {'name': 'BLOCK_7', 'reversed': True},
-            {'name': 'BLOCK_8', 'reversed': True},
-            {'name': 'SW_ALMA_W', 'reversed': True},
-            {'name': 'SW_LG_E', 'reversed': False},
-            {'name': 'SW_LG_W', 'reversed': True},
-            {'name': 'SW_VASONA', 'reversed': True},
+            {'name': 'BLOCK_5', 'inverted': True},
+            {'name': 'BLOCK_6', 'inverted': True},
+            {'name': 'BLOCK_7', 'inverted': True},
+            {'name': 'BLOCK_8', 'inverted': True},
+            {'name': 'SW_ALMA_W', 'inverted': True},
+            {'name': 'SW_LG_E', 'inverted': False},
+            {'name': 'SW_LG_W', 'inverted': True},
+            {'name': 'SW_VASONA', 'inverted': True},
         ],
         'outputs': [
             'W5UR', 'W5UG', 'W5LR', 'W5LG',
@@ -61,10 +70,19 @@ EXPANDERS = [
         'address': 0x23,
         'inputs': [],
         'outputs': [
-            'W7LR', 'W7LG', 'W8R', 'W8G',
+            'W7LR', 'W7LG',
+            # Single signal at Vasona Junction leading to Campbell
+            # or Los Altos.  Because Campbell is the less interesting
+            # direction, the signal is red when the switch is pointing that way.
+            'W8R', 'W8G',
             'E5UR', 'E5UG', 'E5LR', 'E5LG',
             'E6UR', 'E6UG', 'E7R', 'E7G',
-            'E8R', 'E8G', 'Camp8R', 'Camp8G',
+            # Red and green LEDs for signal allowing access to mainline
+            # and block 8 from the Los Altos direction.
+            'E8R', 'E8G',
+            # Red and green LEDs for signal stopping traffic coming
+            # from Campbell.
+            'Camp8R', 'Camp8G',
         ],
     },
 ]

@@ -41,7 +41,7 @@ class BasicTest(unittest.TestCase):
 
         # Test single value.
         self.assertTrue(port_expander_1.get_output_value(0))
-        # Check NOT reversed new value.
+        # Check NOT inverted new value.
         self.assertFalse(port_expander_1.get_output_value(1))
         # Check OR got correct value.
         self.assertTrue(port_expander_1.get_output_value(2))
@@ -167,11 +167,11 @@ class BasicTest(unittest.TestCase):
         logic_thingy.poll()
         self.assertTrue(port_expander_1.get_output_value(0))
 
-    def testReversedInput(self):
-        """Check that inputs configured with reversed=True invert their hardware signal."""
+    def testInvertedInput(self):
+        """Check that inputs configured with inverted=True invert their hardware signal."""
         port_expander_1 = mock_port_expander.PortExpander(0x1)
-        inputs = [{'name': 'BLOCK_1', 'reversed': True},
-                  {'name': 'BLOCK_2', 'reversed': False},
+        inputs = [{'name': 'BLOCK_1', 'inverted': True},
+                  {'name': 'BLOCK_2', 'inverted': False},
                   {'unused': True},
                   'BLOCK_3', '', '', '', '']
         outputs = ['W1R', 'W1G', '', '', '', '', '', '',
@@ -184,25 +184,25 @@ class BasicTest(unittest.TestCase):
         self.assertFalse(name_mapper.is_input('unused'))
 
         # Hardware inputs default to False in mock_port_expander.
-        # BLOCK_1 (reversed=True) should evaluate to True (e.g. block occupied when pulled low).
-        # BLOCK_2 (reversed=False) and BLOCK_3 (str) should evaluate to False.
-        self.assertTrue(name_mapper.test_input('BLOCK_1'))
-        self.assertFalse(name_mapper.test_input('BLOCK_2'))
-        self.assertFalse(name_mapper.test_input('BLOCK_3'))
+        # BLOCK_1 (inverted=True) should evaluate to True (e.g. block occupied when pulled low).
+        # BLOCK_2 (inverted=False) and BLOCK_3 (str) should evaluate to False.
+        self.assertTrue(name_mapper.test_input_or_output('BLOCK_1'))
+        self.assertFalse(name_mapper.test_input_or_output('BLOCK_2'))
+        self.assertFalse(name_mapper.test_input_or_output('BLOCK_3'))
 
         # When hardware input goes HIGH (True):
         # BLOCK_1 should invert to False (block clear).
         port_expander_1.mock_set_input(0, True)
-        self.assertFalse(name_mapper.test_input('BLOCK_1'))
+        self.assertFalse(name_mapper.test_input_or_output('BLOCK_1'))
 
         # When hardware input for BLOCK_2 goes HIGH:
         port_expander_1.mock_set_input(1, True)
-        self.assertTrue(name_mapper.test_input('BLOCK_2'))
+        self.assertTrue(name_mapper.test_input_or_output('BLOCK_2'))
 
-    def testReversedInputInLogic(self):
-        """Check that reversed inputs correctly drive logic evaluation and outputs."""
+    def testInvertedInputInLogic(self):
+        """Check that inverted inputs correctly drive logic evaluation and outputs."""
         port_expander_1 = mock_port_expander.PortExpander(0x1)
-        inputs = [{'name': 'BLOCK_1', 'reversed': True},
+        inputs = [{'name': 'BLOCK_1', 'inverted': True},
                   {'unused': True}, '', '', '', '', '', '']
         outputs = ['W1R', 'W1G', '', '', '', '', '', '',
                    '', '', '', '', '', '', '', '',
@@ -216,7 +216,7 @@ class BasicTest(unittest.TestCase):
         logic_thingy.set_logic(logic_clauses)
 
         # Initially hardware input 0 is False (low).
-        # Since BLOCK_1 has reversed=True, BLOCK_1 is True -> W1R is True, W1G is False.
+        # Since BLOCK_1 has inverted=True, BLOCK_1 is True -> W1R is True, W1G is False.
         logic_thingy.poll()
         self.assertTrue(port_expander_1.get_output_value(0))
         self.assertFalse(port_expander_1.get_output_value(1))
@@ -474,8 +474,8 @@ class SetInputTest(unittest.TestCase):
         return port_expander, engine
 
     def testSetInputByName(self):
-        """Logic.set_input sets a named (non-reversed) input; poll propagates to output."""
-        inputs = [{'name': 'BLOCK_1', 'reversed': False}, '', '', '', '', '', '', '']
+        """Logic.set_input sets a named (non-inverted) input; poll propagates to output."""
+        inputs = [{'name': 'BLOCK_1', 'inverted': False}, '', '', '', '', '', '', '']
         port_expander, engine = self._make_engine(
             inputs, [('OUT_0', signal_helper.OR('BLOCK_1'))])
 
@@ -487,22 +487,22 @@ class SetInputTest(unittest.TestCase):
         engine.poll()
         self.assertFalse(port_expander.get_output_value(0))
 
-    def testSetInputByNameReversed(self):
-        """set_input writes the inverse hardware level for reversed=True inputs.
+    def testSetInputByNameInverted(self):
+        """set_input writes the inverse hardware level for inverted=True inputs.
 
         Callers always pass the logical value (True = occupied/thrown);
         set_input must translate that to the correct raw hardware level.
         """
-        inputs = [{'name': 'BLOCK_1', 'reversed': True}, '', '', '', '', '', '', '']
+        inputs = [{'name': 'BLOCK_1', 'inverted': True}, '', '', '', '', '', '', '']
         port_expander, engine = self._make_engine(
             inputs, [('OUT_0', signal_helper.OR('BLOCK_1'))])
 
-        # Logical True (occupied) -> hardware pulled low -> reversed reads True -> OUT_0 True.
+        # Logical True (occupied) -> hardware pulled low -> inverted reads True -> OUT_0 True.
         engine.set_input('BLOCK_1', True)
         engine.poll()
         self.assertTrue(port_expander.get_output_value(0))
 
-        # Logical False (clear) -> hardware pulled high -> reversed reads False -> OUT_0 False.
+        # Logical False (clear) -> hardware pulled high -> inverted reads False -> OUT_0 False.
         engine.set_input('BLOCK_1', False)
         engine.poll()
         self.assertFalse(port_expander.get_output_value(0))
