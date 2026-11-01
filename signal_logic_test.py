@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 #
-# Unittests for signal_logic.
+# Test the signal controller.
+#
+# Robert Bowdidge, October2024
 
 import unittest
 

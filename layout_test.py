@@ -2,6 +2,7 @@
 #
 # Smoke test for layout configuration.
 #
+# Robert Bowdidge, October 2026
 
 import unittest
 

@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 #
 # Run the signal controller in normal operation.
+#
+# Robert Bowdidge, February 2024
 
 import argparse
 import atexit

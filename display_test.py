@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+#
+# display_test: exercise the LCDDisplayer class.
+#
+# Robert Bowdidge, February 2024.
 
 import unittest
 

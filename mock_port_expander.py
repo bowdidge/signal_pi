@@ -1,5 +1,8 @@
 #
-# Simple debugging port expander.
+# Simple mock to imitate the PortExpander class which manipulates the
+# Microchip MCP23017 chip.
+#
+# Robert Bowdidge, February 2024
 
 class PortExpander(object):
     def __init__(self, device):

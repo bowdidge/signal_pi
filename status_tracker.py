@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 #
-# Thread-safe status tracker for model railroad signal controller.
+# Thread-safe code for recording and supplying recent interesting events.
 #
+# This code is used to give the web server information about the current
+# signal system state, and also to provide single messages to the attached
+# I2C LED display to give debugging messages.
+#
+# Robert Bowdidge, October 2026
 
 import collections
 import datetime

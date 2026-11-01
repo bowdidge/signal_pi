@@ -5,13 +5,12 @@
 # In this case, we're manipulating a Model Railroad Control Systems
 # IOX32 expander board, which uses two Microchip MCP23017 I2C I/O expander
 # chips to control 32 inputs and outputs.
+#
+# Robert Bowdidge, February 2024
 
 import sys
 import time
 
-# For LCD1602 16x2 character display:
-# https://www.raspberrypi-spy.co.uk/2015/05/using-an-i2c-enabled-lcd-screen-with-the-raspberry-pi/
-import rpi_lcd
 import smbus
 
 # Registers for GPIO Ports Bank=0

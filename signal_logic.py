@@ -1,6 +1,10 @@
 #!/usr/bin/python
 #
-# Control signals with logic.
+# Machinery for implementing the signal controller - be able to process
+# a description of the signal system, and handle resolving how inputs
+# change output values.
+#
+# Robert Bowdidge, February 2024
 
 import time
 

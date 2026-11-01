@@ -2,6 +2,7 @@
 #
 # HTTP status server for model railroad signal controller.
 #
+# Robert Bowdidge, October 2026
 
 import json
 import threading

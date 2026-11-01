@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 #
-# Helper functions for defining signal logic terms.
+# Helper functions for defining signal logic terms used in layout file.
 # These return callables that calculate output values based on the
 # current logic state and configuration.
+#
+# Robert Bowdidge, October 2026
 
 
 def OR(term_a, term_b=None, term_c=None, term_d=None, term_e=None):

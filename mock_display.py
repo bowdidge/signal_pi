@@ -1,5 +1,7 @@
 #
-# Mock control LED panel.
+# Mock that implements same interface as control LED panel.
+#
+# Robert Bowdidge, February 2024.
 
 class ConsoleDisplayer(object):
     """Display debugging or status messages on LCD panel."""

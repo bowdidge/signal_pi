@@ -1,7 +1,8 @@
 #!/usr/bin/env python
-
 #
-# Control LED panel.
+# Control an LED alphanumeric panel used for debugging the signal system.
+#
+# Robert Bowdidge, February 2024.
 
 import time
 
