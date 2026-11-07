@@ -6,39 +6,31 @@
 #
 # Robert Bowdidge, October 2026
 
+# Each term is either the name of an input or output, or another
+# callable returning a boolean.
+#
+# Terms are all evaluated even when the result is already known: reading an
+# input has the side effect of recording its state for the status web page and
+# for the LCD panel, so skipping reads would hide input changes.
 
-def OR(term_a, term_b=None, term_c=None, term_d=None, term_e=None):
+def OR(*terms):
+    """True if any term is true."""
     def or_body(logic):
-        values = []
-        values.append(logic.expression_value(term_a))
-        if term_b is not None:
-            values.append(logic.expression_value(term_b))
-        if term_c is not None:
-            values.append(logic.expression_value(term_c))
-        if term_d is not None:
-            values.append(logic.expression_value(term_d))
-        if term_e is not None:
-            values.append(logic.expression_value(term_e))
+        values = [logic.expression_value(term) for term in terms]
         return any(values)
     return or_body
 
 
-def AND(term_a, term_b, term_c=None, term_d=None, term_e=None):
+def AND(*terms):
+    """True if all terms are true."""
     def and_body(logic):
-        values = []
-        values.append(logic.expression_value(term_a))
-        values.append(logic.expression_value(term_b))
-        if term_c is not None:
-            values.append(logic.expression_value(term_c))
-        if term_d is not None:
-            values.append(logic.expression_value(term_d))
-        if term_e is not None:
-            values.append(logic.expression_value(term_e))
+        values = [logic.expression_value(term) for term in terms]
         return all(values)
     return and_body
 
 
-def NOT(term_a):
+def NOT(term):
+    """True if the term is false."""
     def not_body(logic):
-        return not(logic.expression_value(term_a))
+        return not logic.expression_value(term)
     return not_body

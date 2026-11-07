@@ -24,7 +24,7 @@ class LCDDisplayer(object):
         self.lcd.text(msg2, 2)
 
 def main():
-    displayer = MessageDisplayer()
+    displayer = LCDDisplayer()
     displayer.display('hello', 'world')
     time.sleep(2)
 

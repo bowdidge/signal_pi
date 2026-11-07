@@ -17,24 +17,25 @@ class NameMapper(object):
     
     def __init__(self, port_expander, inputs, outputs):
         self.port_expander = port_expander
-        self.inputs = inputs
-        self.outputs = outputs
-        pass
+        self.outputs = list(outputs)
 
-    def has_name(self, name):
-        """Returns true if the output name exists in the port expander."""
-        return name in self.outputs
+        # Map each input name to its (port index, inverted) pair.  Entries in
+        # `inputs` are either plain names or dicts with a 'name' and an
+        # optional 'inverted'.  Missing or empty names are skipped.
+        self.inputs = {}
+        for index, spec in enumerate(inputs):
+            if isinstance(spec, dict):
+                name = spec.get('name')
+                inverted = spec.get('inverted', False)
+            else:
+                name = spec
+                inverted = False
+            if name:
+                self.inputs[name] = (index, inverted)
 
     def is_input(self, name):
         """Returns true if an input with the name exists in the expander."""
-        for input in self.inputs:
-            if type(input) == dict:
-                if input.get('name') == name:
-                    return True
-            else:
-                if input == name:
-                    return True
-        return False
+        return name in self.inputs
     
     def test_input_or_output(self, name):
         """Returns the current state of the named input or output.
@@ -42,28 +43,14 @@ class NameMapper(object):
         If input is defined to be inverted, then return the inverse value
         of the output.
         """
-        index = 0
-        for input in self.inputs:
-            if type(input) == dict:
-                input_name = input.get('name')
-                inverted = input.get('inverted', False)
-            else:
-                input_name = input
-                inverted = False
-            if name == input_name:
-                value = self.port_expander.get_input(index)
-                if inverted:
-                    return not(bool(value))
-                else:
-                    return bool(value)
-                
-            index += 1
+        if name in self.inputs:
+            index, inverted = self.inputs[name]
+            value = bool(self.port_expander.get_input(index))
+            return not value if inverted else value
 
         # No match?  check if there's an output with that name.
         if name in self.outputs:
-            output_index = self.outputs.index(name)
-            output_value = self.port_expander.get_output_value(output_index)
-            return output_value
+            return self.port_expander.get_output_value(self.outputs.index(name))
 
         print('Unknown input %s in %s' % (name, self.inputs))
         return None
@@ -75,23 +62,14 @@ class NameMapper(object):
         (True = occupied/thrown) rather than the raw hardware level.
         Returns True if the name was found, False otherwise.
         """
-        index = 0
-        for inp in self.inputs:
-            if type(inp) == dict:
-                input_name = inp.get('name')
-                inverted = inp.get('inverted', False)
-            else:
-                input_name = inp
-                inverted = False
-            if name == input_name:
-                hw_value = (not value) if inverted else value
-                self.port_expander.mock_set_input(index, hw_value)
-                return True
-            index += 1
-        return False
+        if name not in self.inputs:
+            return False
+        index, inverted = self.inputs[name]
+        self.port_expander.mock_set_input(index, (not value) if inverted else value)
+        return True
 
     def set_output(self, name, value):
-        # TODO(bowdidge): Avoid rewriting value if not changed.
+        # Unchanged values are filtered out by PortExpander.set_output.
         if name not in self.outputs:
             return None
         output_index = self.outputs.index(name)
@@ -110,15 +88,9 @@ class Logic(object):
         all_inputs = []
         all_outputs = []
         for name_mapper in self.name_mappers:
-            for input in name_mapper.inputs:
-                input_name = input
-                inverted = False
-                if type(input) == dict:
-                    input_name = input.get('name')
-                    inverted = input.get('inverted', False)
-                if input_name:
-                    self.name_to_name_mapper[input_name] = name_mapper
-                    all_inputs.append(input_name)
+            for input_name in name_mapper.inputs:
+                self.name_to_name_mapper[input_name] = name_mapper
+                all_inputs.append(input_name)
             for output in name_mapper.outputs:
                 if output:
                     self.name_to_name_mapper[output] = name_mapper

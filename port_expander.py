@@ -64,27 +64,26 @@ class PortExpander(object):
         self.bus.write_byte_data(self.device, IODIRB, 0x00)
         time.sleep(0.02)
         # Clear outputs.
+        self.now_value = 0
         self.bus.write_byte_data(self.device, OLATA, 0)
         time.sleep(0.02)
         self.bus.write_byte_data(self.device, OLATB, 0)
         time.sleep(0.02)
 
     def get_input(self, index):
-        e = None
+        """Read the value of input `index` (0-7), retrying transient I2C errors."""
+        last_error = None
         for i in range(0,3):
             try:
                 # Return true, false.
                 resp = self.bus.read_byte_data(self.device, GPIOA)
-                # print(resp)
-                value = bool(resp & (1 << index))
-                # print('Request value from device %d input %d is %s' %(self.device,
-                # index, value))
-                return value
-            except IOError as e:
-                print('Error in get_input: %s' % e)
+                return bool(resp & (1 << index))
+            except IOError as error:
+                last_error = error
+                print('Error in get_input: %s' % error)
                 # and repeat
         print("Multiple IOErrors when trying to read bus.  Failing.")
-        throw(e)
+        raise last_error
 
     def get_output_value(self, index):
         if self.device % 2 == 0:
@@ -93,26 +92,26 @@ class PortExpander(object):
         return bool(value)
 
     def set_output(self, index, value):
-        try:
-            self.set_output_inner(index, value)
-        except Exception as e:
-            print('failure to write, trying again')
-            self.set_output_inner(index, value)
+        """Set output `index` to `value`, skipping the write if already set."""
+        if self.get_output_value(index) == bool(value):
+            # Each write costs two I2C transactions plus setup delays, so
+            # avoid rewriting lines that aren't changing.
+            return
+        self.set_output_inner(index, value)
 
     def set_output_inner(self, index, value):
-        e = None
+        # On even-numbered devices, bank A is input and bank B is output, so
+        # logical outputs start at bit 8 of the 16 bit register.
+        hw_index = index + 8 if self.device % 2 == 0 else index
+        last_error = None
         for i in range(0, 3):
             try:
-                if self.device % 2 == 0:
-                    index += 8
                 now_value = self.now_value
 
                 if value:
-                    now_value |= (1 << index)
+                    now_value |= (1 << hw_index)
                 else:
-                    now_value &= ~ (1 << index)
-                #print('Now value is 0x%08x' % now_value)
-                #print('Set device %s output %s to %s' % (self.device, index, value))
+                    now_value &= ~ (1 << hw_index)
 
                 self.bus.write_byte_data(self.device, OLATA, now_value & 0xff)
                 time.sleep(0.02)
@@ -120,11 +119,12 @@ class PortExpander(object):
                 time.sleep(0.02)
                 self.now_value = now_value
                 return
-            except IOError as e:
-                print('Error in set_output_inner: %s' % e)
+            except IOError as error:
+                last_error = error
+                print('Error in set_output_inner: %s' % error)
                 # and try again.
         # Failed too many times?  Bail out.
-        throw(e)
+        raise last_error
 
 
     def set_outputs(self, value):

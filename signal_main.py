@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# TODO(bowdidge): Consider switching to Python3 - 3.7.3 is on RPi.
 #
 # Run the signal controller in normal operation.
 #

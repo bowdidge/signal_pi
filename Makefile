@@ -1,7 +1,8 @@
 all: test
 
 test:
-	python -m unittest discover -p "*_test.py"
+	python2 -m unittest discover -p "*_test.py"
+	python3 -m unittest discover -p "*_test.py"
 
 clean:
 	rm *.pyc

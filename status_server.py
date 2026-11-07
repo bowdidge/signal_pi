@@ -17,12 +17,23 @@ try:
 except ImportError:
     import SocketServer as socketserver
 
-# ThreadingHTTPServer compatibility across Python 2 and 3
-if hasattr(http_server, 'ThreadingHTTPServer'):
-    ThreadingServerClass = http_server.ThreadingHTTPServer
-else:
-    class ThreadingServerClass(socketserver.ThreadingMixIn, http_server.HTTPServer):
-        daemon_threads = True
+class ThreadingServerClass(socketserver.ThreadingMixIn, http_server.HTTPServer):
+    """HTTP server that handles each request in its own thread.
+
+    ThreadingHTTPServer exists only in Python 3, so this works on both.
+    """
+
+    daemon_threads = True
+
+    def server_bind(self):
+        # HTTPServer.server_bind() calls socket.getfqdn() on the bind address.
+        # Python 2's getfqdn() can block for tens of seconds when reverse DNS
+        # is slow, and the name is only used in log messages, so use the
+        # address as-is instead.
+        socketserver.TCPServer.server_bind(self)
+        host, port = self.server_address[:2]
+        self.server_name = host
+        self.server_port = port
 
 
 HTML_PAGE = """<!DOCTYPE html>
