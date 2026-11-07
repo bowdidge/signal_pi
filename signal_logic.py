@@ -82,7 +82,6 @@ class Logic(object):
     def __init__(self, name_mappers, status_tracker=None):
         self.name_mappers = name_mappers
         self.status_tracker = status_tracker
-        self.past_values = {}
         self.name_to_name_mapper = {}
 
         all_inputs = []
@@ -121,11 +120,8 @@ class Logic(object):
         value = name_mapper.test_input_or_output(input_name)
 
         if name_mapper.is_input(input_name):
-            past_value = self.past_values.get(input_name)
-            if past_value is None or past_value != value:
-                if self.status_tracker:
-                    self.status_tracker.record_change(input_name, value, is_input=True)
-            self.past_values[input_name] = value
+            if self.status_tracker:
+                self.status_tracker.record_change(input_name, value, is_input=True)
         return value
 
     def expression_value(self, expression):
